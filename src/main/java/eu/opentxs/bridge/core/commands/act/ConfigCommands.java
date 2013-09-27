@@ -9,8 +9,8 @@ import eu.opentxs.bridge.core.dto.Account;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class ConfigCommands extends Commands {
-	
-	public static void init(){
+
+	public static void init() {
 		addToCommands(new SetMode(), Category.CONFIG, Sophistication.MINI);
 		addToCommands(new SetServer(), Category.CONFIG, Sophistication.SIMPLE);
 		addToCommands(new SetNym(), Category.CONFIG, Sophistication.MINI);
@@ -18,7 +18,7 @@ public class ConfigCommands extends Commands {
 		addToCommands(new SetAccount(), Category.CONFIG, Sophistication.MINI);
 		addToCommands(new ShowConfig(), Category.CONFIG, Sophistication.MINI);
 	}
-	
+
 	public static class SetMode extends Command {
 		@Override
 		public boolean introduceArgument(int index) {
@@ -47,7 +47,7 @@ public class ConfigCommands extends Commands {
 			OpenTransactions.reset();
 		}
 	}
-	
+
 	public static class SetServer extends Command {
 		private List<String> serverIds;
 		@Override
@@ -81,7 +81,7 @@ public class ConfigCommands extends Commands {
 			Module.setMyServerId(serverId);
 		}
 	}
-	
+
 	public static class SetNym extends Command {
 		private List<String> nymIds;
 		@Override
@@ -115,7 +115,7 @@ public class ConfigCommands extends Commands {
 			Module.setMyNymId(nymId);
 		}
 	}
-	
+
 	public static class SetAsset extends Command {
 		private List<String> assetIds;
 		@Override
@@ -187,7 +187,7 @@ public class ConfigCommands extends Commands {
 			Module.showMe();
 		}
 	}
-	
+
 	public static class ShowConfig extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {

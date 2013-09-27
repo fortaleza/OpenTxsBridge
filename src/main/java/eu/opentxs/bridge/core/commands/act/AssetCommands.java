@@ -22,7 +22,7 @@ public class AssetCommands extends Commands {
 		addToCommands(new EditAsset(), Category.ASSET, Sophistication.SIMPLE);
 		addToCommands(new DeleteAsset(), Category.ASSET, Sophistication.MINI);
 		addToCommands(new ShowAssetContract(), Category.ASSET, Sophistication.ADVANCED);
-		//addToCommands(new ShowAssetAccounts(), Category.ASSET, Sophistication.ADVANCED);
+		// addToCommands(new ShowAssetAccounts(), Category.ASSET, Sophistication.ADVANCED);
 	}
 
 	public static class CreateAsset extends Command {
@@ -56,8 +56,7 @@ public class AssetCommands extends Commands {
 		protected void action(String[] args) throws Exception {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			String definition = readStringFromInput("Paste an asset definition here");
-			if (Util.isValidString(definition)
-					&& isValidAssetDefinition(definition)) {
+			if (Util.isValidString(definition) && isValidAssetDefinition(definition)) {
 				definition = Interpreter.restoreNewLines(definition);
 			} else {
 				print("This does not look like an asset definition");
@@ -70,8 +69,7 @@ public class AssetCommands extends Commands {
 			execute(nymId, definition);
 		}
 
-		public static void execute(String nymId, String definition)
-				throws Exception {
+		public static void execute(String nymId, String definition) throws Exception {
 			String assetId = AssetModule.createAsset(nymId, definition);
 			String contract = AssetModule.getAssetContract(assetId);
 			if (readBooleanFromInput("Would you like to save the new asset contract to a file?"))
@@ -113,7 +111,7 @@ public class AssetCommands extends Commands {
 			String nymId = DataModel.getMyNymId();
 			if (!Util.isValidString(serverId) || !Util.isValidString(nymId))
 				return;
-			if (readBooleanFromInput("Would you like to create a new account for this asset?")) 
+			if (readBooleanFromInput("Would you like to create a new account for this asset?"))
 				AccountCommands.CreateAccount.execute(serverId, nymId, assetId, null);
 		}
 	}
@@ -178,9 +176,8 @@ public class AssetCommands extends Commands {
 			String accountName = null;
 			execute(serverId, nymId, contract, accountName);
 		}
-		
-		public static void execute(String serverId, String nymId,
-				String contract, String accountName) throws Exception {
+
+		public static void execute(String serverId, String nymId, String contract, String accountName) throws Exception {
 			{
 				int index = contract.indexOf("nymID=");
 				if (index == 0)
@@ -198,8 +195,7 @@ public class AssetCommands extends Commands {
 			}
 			NymModule nymModule = new NymModule(serverId, nymId);
 			String accountId = nymModule.issueAsset(contract, accountName);
-			if (Module.getAccountIds().size() == 1
-					|| readBooleanFromInput("Would you like to set the issuer account as your account?"))
+			if (Module.getAccountIds().size() == 1 || readBooleanFromInput("Would you like to set the issuer account as your account?"))
 				SetAccount.execute(accountId);
 			else
 				Module.showAccount(accountId);
@@ -236,8 +232,7 @@ public class AssetCommands extends Commands {
 			String assetName = getString(1);
 			execute(assetId, assetName);
 		}
-		public static void execute(String assetId, String assetName)
-				throws Exception {
+		public static void execute(String assetId, String assetName) throws Exception {
 			AssetModule.renameAsset(assetId, assetName);
 		}
 	}
@@ -277,7 +272,7 @@ public class AssetCommands extends Commands {
 				writeStringToFile(Text.FOLDER_ASSETS, Extension.CONTRACT, contract);
 		}
 	}
-	
+
 	public static class ShowAssetAccounts extends Command {
 		private List<String> assetIds;
 		@Override

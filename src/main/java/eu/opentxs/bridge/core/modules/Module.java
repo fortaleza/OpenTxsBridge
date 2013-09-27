@@ -24,34 +24,34 @@ public abstract class Module {
 	protected interface RequestGenerator {
 		public int getRequest();
 	}
-	
+
 	protected static boolean verbose;
 	protected static boolean verboseServer;
 	protected static boolean verboseClientLog;
 	protected static boolean verboseClientSkip;
 	protected static boolean verboseClientWarn;
 	protected static boolean verboseClientSuccess;
-	
+
 	protected enum AccountType {
-    	SIMPLE("simple"), ISSUER("issuer");
-    	private String value;
-    	private AccountType(String value) {
-    		this.value = value;
-    	}
-    	public String getValue() {
-    		return value;
-    	}
-    	public static AccountType parse(String value) {
-    		if (value.equalsIgnoreCase(SIMPLE.getValue()))
-    			return SIMPLE;
-    		if (value.equalsIgnoreCase(ISSUER.getValue()))
-    			return ISSUER;
-    		return null;
-    	}
-    }
+		SIMPLE("simple"), ISSUER("issuer");
+		private String value;
+		private AccountType(String value) {
+			this.value = value;
+		}
+		public String getValue() {
+			return value;
+		}
+		public static AccountType parse(String value) {
+			if (value.equalsIgnoreCase(SIMPLE.getValue()))
+				return SIMPLE;
+			if (value.equalsIgnoreCase(ISSUER.getValue()))
+				return ISSUER;
+			return null;
+		}
+	}
 
 	public static void init() {
-		
+
 		String walletId = DataModel.getWalletId();
 		File file = new File(getWalletFileName(walletId));
 		try {
@@ -62,31 +62,31 @@ public abstract class Module {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		String myServerId = DataModel.getMyServerId();
 		if (myServerId != null)
 			myServerId = OTAPI.getServerIdFromPartial(myServerId);
 		if (!Util.isValidString(myServerId))
 			Settings.getInstance().setMyServerId(DataModel.EMPTY);
-		
+
 		String myNymId = DataModel.getMyNymId();
 		if (myNymId != null)
 			myNymId = OTAPI.getNymIdFromPartial(myNymId);
 		if (!Util.isValidString(myNymId))
 			Settings.getInstance().setMyNymId(DataModel.EMPTY);
-		
+
 		String myAssetId = DataModel.getMyAssetId();
 		if (myAssetId != null)
 			myAssetId = OTAPI.getAssetIdFromPartial(myAssetId);
 		if (!Util.isValidString(myAssetId))
 			Settings.getInstance().setMyAssetId(DataModel.EMPTY);
-		
+
 		String myAccountId = DataModel.getMyAccountId();
 		if (myAccountId != null)
 			myAccountId = OTAPI.getAccountIdFromPartial(myAccountId);
 		if (!Util.isValidString(myAccountId))
 			Settings.getInstance().setMyAccountId(DataModel.EMPTY);
-		
+
 		Settings.getInstance().save();
 		showConfig();
 		verbose = false;
@@ -122,7 +122,7 @@ public abstract class Module {
 		Settings.getInstance().save();
 		showConfig();
 	}
-	
+
 	public static void setMyNymId(String nymId) throws Exception {
 		String myNymId;
 		if (!Util.isValidString(nymId)) {
@@ -141,7 +141,7 @@ public abstract class Module {
 		Settings.getInstance().save();
 		showConfig();
 	}
-	
+
 	public static void setMyAssetId(String assetId) throws Exception {
 		String myAssetId;
 		if (!Util.isValidString(assetId)) {
@@ -182,11 +182,11 @@ public abstract class Module {
 		Settings.getInstance().setMyAccountId(myAccountId);
 		Settings.getInstance().save();
 	}
-	
+
 	public static boolean hasAccess(Sophistication sophistication) {
 		return DataModel.getSophistication().hasAccess(sophistication);
 	}
-	
+
 	public static UTC getTime() {
 		return UTC.getDateUTC(OTAPI.getTime());
 	}
@@ -194,7 +194,7 @@ public abstract class Module {
 	public static void showTime() {
 		print(UTC.timeToString(getTime()));
 	}
-	
+
 	public static void showConfig() {
 		Sophistication sophistication = DataModel.getSophistication();
 		String walletId = DataModel.getWalletId();
@@ -211,14 +211,13 @@ public abstract class Module {
 		print(String.format("%12s: %s (%s)", "Account", myAccountId, getAccountName(myAccountId)));
 		print(Util.repeat("-", 13));
 	}
-	
+
 	public static void showMe() throws Exception {
 		showLedger(DataModel.getMyAccountId());
 	}
-	
+
 	public static void createWallet(String walletId) throws Exception {
-		InputStream is = ClassLoader.getSystemResource(
-				ApplProperties.get().getString("wallet.xml")).openStream();
+		InputStream is = ClassLoader.getSystemResource(ApplProperties.get().getString("wallet.xml")).openStream();
 		Scanner s = new Scanner(is);
 		s.useDelimiter("\\A");
 		String content = s.hasNext() ? s.next() : "";
@@ -229,7 +228,7 @@ public abstract class Module {
 		fw.write(content);
 		fw.close();
 	}
-	
+
 	public static void loadAndShowWallet(String walletId) throws Exception {
 		loadWallet(walletId);
 		Settings.getInstance().setWalletId(walletId);
@@ -256,7 +255,7 @@ public abstract class Module {
 		}
 		print(Util.repeat("-", 70));
 	}
-	
+
 	public static List<String> getServerIds() {
 		List<String> servers = new ArrayList<String>();
 		int count = OTAPI.getServerCount();
@@ -264,7 +263,7 @@ public abstract class Module {
 			servers.add(OTAPI.getServerId(index));
 		return servers;
 	}
-	
+
 	public static List<String> getNymIds() {
 		List<String> nyms = new ArrayList<String>();
 		int count = OTAPI.getNymCount();
@@ -306,7 +305,7 @@ public abstract class Module {
 			return null;
 		return OTAPI.getAccountAssetId(accountId);
 	}
-	
+
 	public static Double getDouble(String s) throws Exception {
 		Double value = null;
 		try {
@@ -357,7 +356,7 @@ public abstract class Module {
 			return getAccountStandardName(accountId);
 		return OTAPI.getAccountName(accountId);
 	}
-	
+
 	public static String getAccountType(String accountId) {
 		if (!Util.isValidString(accountId))
 			return null;
@@ -367,31 +366,26 @@ public abstract class Module {
 	public static String getAccountStandardName(String accountId) {
 		String accountType = getAccountType(accountId);
 		if (accountType.equals(AccountType.ISSUER.getValue())) {
-			return String.format("%s%s's %s",
-					Text.ISSUER_SIGN,
-					getNymName(getAccountNymId(accountId)),
-					getAssetName(getAccountAssetId(accountId)));
+			return String.format("%s%s's %s", Text.ISSUER_SIGN, getNymName(getAccountNymId(accountId)), getAssetName(getAccountAssetId(accountId)));
 		}
-		return String.format("%s's %s", getNymName(getAccountNymId(accountId)),
-				getAssetName(getAccountAssetId(accountId)));
+		return String.format("%s's %s", getNymName(getAccountNymId(accountId)), getAssetName(getAccountAssetId(accountId)));
 	}
 
 	public static String getPurseStandardName(String nymId, String assetId) {
-		return String.format("%s's %s", getNymName(nymId),
-				getAssetName(assetId));
+		return String.format("%s's %s", getNymName(nymId), getAssetName(assetId));
 	}
-	
+
 	public static InstrumentType getInstrumentType(String instrument) {
 		return InstrumentType.parse(OTAPI.Instrument.getType(instrument));
 	}
-	
+
 	public static void showServer(String serverId) {
 		print(Util.repeat("-", 13));
 		print(String.format("%12s: %s", "Name", getServerName(serverId)));
 		print(String.format("%12s: %s", "Server", serverId));
 		print(Util.repeat("-", 13));
 	}
-	
+
 	public static void showNym(String nymId) {
 		print(Util.repeat("-", 13));
 		print(String.format("%12s: %s", "Name", getNymName(nymId)));
@@ -405,7 +399,7 @@ public abstract class Module {
 		print(String.format("%12s: %s", "Asset", assetId));
 		print(Util.repeat("-", 13));
 	}
-	
+
 	public static void showAccount(String accountId) {
 		print(Util.repeat("-", 13));
 		print(String.format("%12s: %s", "Name", getAccountName(accountId)));
@@ -417,38 +411,34 @@ public abstract class Module {
 		String serverId = getAccountServerId(accountId);
 		String nymId = getAccountNymId(accountId);
 		String assetId = getAccountAssetId(accountId);
-		
+
 		String purse = OTAPI.loadPurse(serverId, nymId, assetId);
 		Double purseBalanceValue = new Double(0);
 		if (Util.isValidString(purse))
 			purseBalanceValue = AssetModule.getPurseBalanceValue(serverId, assetId, purse);
-		
+
 		print(Util.repeat("-", 13));
 		print(String.format("%12s: %s", "Name", getAccountName(accountId)));
 		if (purseBalanceValue > 0)
-			print(String.format("%12s: %.2f (+ %.2f)", "Balance", 
-					getAccountBalanceValue(accountId),
-					purseBalanceValue));
+			print(String.format("%12s: %.2f (+ %.2f)", "Balance", getAccountBalanceValue(accountId), purseBalanceValue));
 		else
 			print(String.format("%12s: %.2f", "Balance", getAccountBalanceValue(accountId)));
 		print(String.format("%12s: %s", "Account", accountId));
 		print(String.format("%12s: %s (%s)", "Asset", assetId, getAssetName(assetId)));
 		print(String.format("%12s: %s (%s)", "Nym", nymId, getNymName(nymId)));
 		print(String.format("%12s: %s (%s)", "Server", serverId, getServerName(serverId)));
-		
+
 		print(Util.repeat("-", 13));
 	}
 
-	
 	/**********************************************************************
-     * internal
-     *********************************************************************/
-	
+	 * internal
+	 *********************************************************************/
+
 	private static String getWalletFileName(String walletId) {
-		return String.format("%s/%s.%s",
-				Util.getUserDataPath(), walletId, Extension.DEFINITION.getValue());
+		return String.format("%s/%s.%s", Util.getUserDataPath(), walletId, Extension.DEFINITION.getValue());
 	}
-	
+
 	private static void loadWallet(String walletId) throws Exception {
 		String fileName = String.format("%s.%s", walletId, Extension.DEFINITION.getValue());
 		if (!OTAPI.setWallet(fileName))
@@ -456,7 +446,7 @@ public abstract class Module {
 		if (!OTAPI.loadWallet())
 			error("Failed to load wallet");
 	}
-	
+
 	private static void applyVerbose() {
 		if (verbose) {
 			verboseServer = false;
@@ -466,17 +456,13 @@ public abstract class Module {
 			verboseClientSuccess = true;
 		} else {
 			verboseServer = ApplProperties.get().getBoolean("verbose.server");
-			verboseClientLog = ApplProperties.get().getBoolean(
-					"verbose.client.log");
-			verboseClientSkip = ApplProperties.get().getBoolean(
-					"verbose.client.skip");
-			verboseClientWarn = ApplProperties.get().getBoolean(
-					"verbose.client.warn");
-			verboseClientSuccess = ApplProperties.get().getBoolean(
-					"verbose.client.success");
+			verboseClientLog = ApplProperties.get().getBoolean("verbose.client.log");
+			verboseClientSkip = ApplProperties.get().getBoolean("verbose.client.skip");
+			verboseClientWarn = ApplProperties.get().getBoolean("verbose.client.warn");
+			verboseClientSuccess = ApplProperties.get().getBoolean("verbose.client.success");
 		}
 	}
-	
+
 	private static void showServers() {
 		print(String.format("%12s:", "SERVERS"));
 		int count = OTAPI.getServerCount();
@@ -491,7 +477,7 @@ public abstract class Module {
 		if (i > 0)
 			print(Util.repeat("-", 13));
 	}
-	
+
 	private static void showNyms() {
 		print(String.format("%12s:", "NYMS"));
 		int count = OTAPI.getNymCount();
@@ -506,7 +492,7 @@ public abstract class Module {
 		if (i > 0)
 			print(Util.repeat("-", 13));
 	}
-	
+
 	private static void showAssets() {
 		print(String.format("%12s:", "ASSETS"));
 		int count = OTAPI.getAssetCount();
@@ -521,7 +507,7 @@ public abstract class Module {
 		if (i > 0)
 			print(Util.repeat("-", 13));
 	}
-	
+
 	private static Boolean isMeantForParsing(String id) {
 		if (id == null)
 			return null;
@@ -532,7 +518,7 @@ public abstract class Module {
 		int max = ApplProperties.get().getInteger("parsing.size.max");
 		return (len >= min && len <= max);
 	}
-	
+
 	protected static String parseServerId(String serverId) throws Exception {
 		Boolean parsing = isMeantForParsing(serverId);
 		if (parsing == null)
@@ -692,15 +678,13 @@ public abstract class Module {
 	public static void error(Text text, int result) throws Exception {
 		error(text.toString(), result);
 	}
-	
-	protected static Double getAccountBalanceValue(String accountId)
-			throws Exception {
+
+	protected static Double getAccountBalanceValue(String accountId) throws Exception {
 		return getDouble(getAccountBalance(accountId));
 	}
-	
-	protected static Double getPurseBalanceValue(String serverId, String assetId, String purse) 
-			throws Exception {
-    	return getDouble(OTAPI.Purse.getBalance(serverId, assetId, purse));
-    }
-	
+
+	protected static Double getPurseBalanceValue(String serverId, String assetId, String purse) throws Exception {
+		return getDouble(OTAPI.Purse.getBalance(serverId, assetId, purse));
+	}
+
 }

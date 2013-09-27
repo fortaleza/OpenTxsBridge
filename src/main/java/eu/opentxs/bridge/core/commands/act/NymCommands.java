@@ -22,7 +22,7 @@ public class NymCommands extends Commands {
 		addToCommands(new ExportNym(), Category.NYM, Sophistication.ADVANCED);
 		addToCommands(new ImportNym(), Category.NYM, Sophistication.ADVANCED);
 	}
-	
+
 	public static class CreateNym extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -78,8 +78,7 @@ public class NymCommands extends Commands {
 			String nymName = getString(1);
 			execute(nymId, nymName);
 		}
-		public static void execute(String nymId, String nymName)
-				throws Exception {
+		public static void execute(String nymId, String nymName) throws Exception {
 			NymModule.renameNym(nymId, nymName);
 		}
 	}
@@ -133,8 +132,7 @@ public class NymCommands extends Commands {
 			execute(serverId, nymId);
 		}
 
-		public static void execute(String serverId, String nymId)
-				throws Exception {
+		public static void execute(String serverId, String nymId) throws Exception {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			nymModule.registerNymAtServer();
 		}
@@ -189,8 +187,7 @@ public class NymCommands extends Commands {
 			execute(serverId, nymId);
 		}
 
-		public static void execute(String serverId, String nymId)
-				throws Exception {
+		public static void execute(String serverId, String nymId) throws Exception {
 			Module.showNym(nymId);
 			if (readBooleanFromInput("Are you sure you want to remove this nym from server?")) {
 				NymModule nymModule = new NymModule(serverId, nymId);
@@ -235,9 +232,7 @@ public class NymCommands extends Commands {
 				do {
 					serverId = NymModule.isNymRegisteredAtAnyServer(nymId);
 					if (serverId != null) {
-						print(String.format("%s %s", 
-								"This nym is still registered at server", 
-								Module.getServerName(serverId)));
+						print(String.format("%s %s", "This nym is still registered at server", Module.getServerName(serverId)));
 						if (readBooleanFromInput("Would you like to remove it from server?"))
 							new NymModule(serverId, nymId).removeNymFromServer();
 						else
@@ -250,7 +245,7 @@ public class NymCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class ExportNym extends Command {
 		private List<String> nymIds;
 		@Override
@@ -287,7 +282,7 @@ public class NymCommands extends Commands {
 				writeStringToFile(Text.FOLDER_NYMS, Extension.CONTRACT, contract);
 		}
 	}
-	
+
 	public static class ImportNym extends Command {
 		@Override
 		public boolean introduceArgument(int index) {

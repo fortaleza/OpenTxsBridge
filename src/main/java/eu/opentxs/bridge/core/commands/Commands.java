@@ -35,10 +35,8 @@ public abstract class Commands {
 	}
 
 	public enum Category {
-		META("META"), CONFIG("CONFIG"), WALLET("WALLET"),
-		SERVER("SERVER"), NYM("NYM"), ASSET("ASSET"), ACCOUNT("ACCOUNT"),
-		CONTACT("CONTACT"), BUSINESS("BUSINESS"), BUSINESS_EXTRA("BUSINESS EXTRA"),
-		HACK("HACK"), TEST("TEST");
+		META("META"), CONFIG("CONFIG"), WALLET("WALLET"), SERVER("SERVER"), NYM("NYM"), ASSET("ASSET"), ACCOUNT("ACCOUNT"), CONTACT("CONTACT"), BUSINESS("BUSINESS"), BUSINESS_EXTRA("BUSINESS EXTRA"), HACK(
+				"HACK"), TEST("TEST");
 		private String label;
 		private Category(String label) {
 			this.label = label;
@@ -48,7 +46,7 @@ public abstract class Commands {
 			return label;
 		}
 	}
-	
+
 	public enum Sophistication {
 		MINI(0), SIMPLE(1), ADVANCED(2), ISSUER(3), ADMIN(4), TOP(9);
 		private int value;
@@ -77,8 +75,7 @@ public abstract class Commands {
 	}
 
 	public enum Extension {
-		DEFINITION(ApplProperties.get().getString("extension.definition")),
-		CONTRACT(ApplProperties.get().getString("extension.contract"));
+		DEFINITION(ApplProperties.get().getString("extension.definition")), CONTRACT(ApplProperties.get().getString("extension.contract"));
 		private String value;
 		private Extension(String value) {
 			this.value = value;
@@ -90,14 +87,14 @@ public abstract class Commands {
 
 	public static Map<String, Command> commands = new HashMap<>();
 	private static int index = 0;
-	
+
 	public static void reset() {
 		commands.clear();
 		addToCommands(new Index(), Category.META);
 		addToCommands(new Help(), Category.META);
 		addToCommands(new Quit(), Category.META);
 	}
-	
+
 	public static void addToCommands(Command command, Category category, Sophistication sophistication) {
 		if (Module.hasAccess(sophistication))
 			addToCommands(command, category);
@@ -122,23 +119,19 @@ public abstract class Commands {
 	}
 
 	protected static boolean isValidServerDefinition(String s) {
-		return (!s.contains("BEGIN SIGNED CONTRACT") && s
-				.contains("notaryProviderContract"));
+		return (!s.contains("BEGIN SIGNED CONTRACT") && s.contains("notaryProviderContract"));
 	}
 
 	protected static boolean isValidAssetDefinition(String s) {
-		return (!s.contains("BEGIN SIGNED CONTRACT") && s
-				.contains("digitalAssetContract"));
+		return (!s.contains("BEGIN SIGNED CONTRACT") && s.contains("digitalAssetContract"));
 	}
 
 	protected static boolean isValidServerContract(String s) {
-		return (s.contains("BEGIN SIGNED CONTRACT") && s
-				.contains("notaryProviderContract"));
+		return (s.contains("BEGIN SIGNED CONTRACT") && s.contains("notaryProviderContract"));
 	}
 
 	protected static boolean isValidAssetContract(String s) {
-		return (s.contains("BEGIN SIGNED CONTRACT") && s
-				.contains("digitalAssetContract"));
+		return (s.contains("BEGIN SIGNED CONTRACT") && s.contains("digitalAssetContract"));
 	}
 
 	protected static boolean isValidNymContract(String s) {
@@ -164,23 +157,22 @@ public abstract class Commands {
 	protected static boolean isValidInvoiceContract(String s) {
 		return s.contains("BEGIN SIGNED INVOICE");
 	}
-	
+
 	protected static List<String> getWalletIds() {
 		File dir = new File(Util.getUserDataPath());
 		File[] files = dir.listFiles();
 		List<String> ids = new ArrayList<String>();
 		for (File file : files) {
-		    if (file.isFile()) {
-		    	String name = file.getName();
-		    	if (Extension.DEFINITION.getValue().equals(getFileExtension(name)))
-		    		ids.add(name.substring(0, name.lastIndexOf('.')));
-		    }
+			if (file.isFile()) {
+				String name = file.getName();
+				if (Extension.DEFINITION.getValue().equals(getFileExtension(name)))
+					ids.add(name.substring(0, name.lastIndexOf('.')));
+			}
 		}
 		return ids;
 	}
 
-	protected static Boolean readBooleanFromInput(String prompt)
-			throws Exception {
+	protected static Boolean readBooleanFromInput(String prompt) throws Exception {
 		print(String.format("%s (%s/%s)", prompt, "Y", "N"));
 		String input = ConsoleApplication.readLineFromConsole();
 		return (Util.isValidString(input) && (input.equalsIgnoreCase("Y")));
@@ -192,19 +184,14 @@ public abstract class Commands {
 		return input;
 	}
 
-	protected static String readStringFromFile(Text folder, Extension extension)
-			throws Exception {
+	protected static String readStringFromFile(Text folder, Extension extension) throws Exception {
 		Path path = null;
 		while (path == null) {
-			path = openFileChooser(folder, extension, Text.OPEN_FILE_TITLE,
-					Text.OPEN_FILE);
+			path = openFileChooser(folder, extension, Text.OPEN_FILE_TITLE, Text.OPEN_FILE);
 			if (path == null)
 				return null;
 			if (!path.toFile().exists()) {
-				JOptionPane.showMessageDialog(null,
-						Text.FILE_DOES_NOT_EXIST.toString(),
-						Text.FILE_DOES_NOT_EXIST_TITLE.toString(),
-						JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, Text.FILE_DOES_NOT_EXIST.toString(), Text.FILE_DOES_NOT_EXIST_TITLE.toString(), JOptionPane.ERROR_MESSAGE);
 				path = null;
 			}
 		}
@@ -215,21 +202,15 @@ public abstract class Commands {
 		return content;
 	}
 
-	protected static boolean writeStringToFile(Text folder,
-			Extension extension, String content)
-			throws Exception {
+	protected static boolean writeStringToFile(Text folder, Extension extension, String content) throws Exception {
 		Path path = null;
 		while (path == null) {
-			path = openFileChooser(folder, extension, Text.SAVE_FILE_TITLE,
-					Text.SAVE_FILE);
+			path = openFileChooser(folder, extension, Text.SAVE_FILE_TITLE, Text.SAVE_FILE);
 			if (path == null)
 				return false;
 			if (path.toFile().exists()) {
-				int choice = JOptionPane.showOptionDialog(null,
-						Text.FILE_OVERWRITE.toString(),
-						Text.FILE_OVERWRITE_TITLE.toString(),
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE, null, null, null);
+				int choice = JOptionPane.showOptionDialog(null, Text.FILE_OVERWRITE.toString(), Text.FILE_OVERWRITE_TITLE.toString(), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+						null, null);
 				if (choice != JOptionPane.YES_OPTION)
 					path = null;
 			}
@@ -242,18 +223,15 @@ public abstract class Commands {
 		print(fileName);
 		return true;
 	}
-	
-	private static Path openFileChooser(Text folder, final Extension extension,
-			Text title, Text approveButtonText) {
-		String startDir = Util.getApplicationSourcePath()
-				+ ApplProperties.get().getString("contracts.dir");
+
+	private static Path openFileChooser(Text folder, final Extension extension, Text title, Text approveButtonText) {
+		String startDir = Util.getApplicationSourcePath() + ApplProperties.get().getString("contracts.dir");
 		if (folder != null)
 			startDir = String.format("%s/%s", startDir, folder);
 		return openFileChooser(startDir, extension, title, approveButtonText);
 	}
 
-	protected static Path openFileChooser(String startDir, final Extension extension,
-			Text title, Text approveButtonText) {
+	protected static Path openFileChooser(String startDir, final Extension extension, Text title, Text approveButtonText) {
 		{
 			File file = new File(startDir);
 			if (!file.exists())
@@ -269,8 +247,7 @@ public abstract class Commands {
 					return true;
 				if (f.isDirectory())
 					return true;
-				return extension.getValue().equals(
-						getFileExtension(f.getName()));
+				return extension.getValue().equals(getFileExtension(f.getName()));
 			}
 
 			@Override
@@ -280,8 +257,7 @@ public abstract class Commands {
 		});
 		if (fileChooser.showDialog(null, approveButtonText.toString()) != JFileChooser.APPROVE_OPTION)
 			return null;
-		Path path = FileSystems.getDefault().getPath(
-				fileChooser.getSelectedFile().getPath());
+		Path path = FileSystems.getDefault().getPath(fileChooser.getSelectedFile().getPath());
 		String fileName = path.toString();
 		if (!extension.getValue().equals(getFileExtension(fileName)))
 			fileName = String.format("%s.%s", fileName, extension.getValue());
@@ -313,9 +289,7 @@ public abstract class Commands {
 					category = command.category;
 					System.out.println(String.format("%21s", category));
 				}
-				System.out.println(String.format("%21s (%9s): %s",
-						command.getNameLocal(), command.getPseudoLocal(),
-						command.getArgumentsLocal()));
+				System.out.println(String.format("%21s (%9s): %s", command.getNameLocal(), command.getPseudoLocal(), command.getArgumentsLocal()));
 			}
 		}
 	}
@@ -337,8 +311,7 @@ public abstract class Commands {
 					category = command.category;
 					System.out.println(String.format("%21s", category));
 				}
-				System.out.println(String.format("%21s: %s",
-						command.getNameLocal(), command.getHelpLocal()));
+				System.out.println(String.format("%21s: %s", command.getNameLocal(), command.getHelpLocal()));
 			}
 		}
 	}

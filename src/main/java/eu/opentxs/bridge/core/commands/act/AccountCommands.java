@@ -33,7 +33,7 @@ public class AccountCommands extends Commands {
 		addToCommands(new ManageUnrealized(), Category.ACCOUNT, Sophistication.ADVANCED);
 		addToCommands(new Refresh(), Category.ACCOUNT, Sophistication.MINI);
 	}
-	
+
 	public static class CreateAccount extends Command {
 		private List<String> serverIds;
 		private List<String> nymIds;
@@ -67,7 +67,7 @@ public class AccountCommands extends Commands {
 						return Module.getNymName(s);
 					}
 				}).show(nymIds);
-			} 
+			}
 			if (index == 2) {
 				return (new PlainPresenter() {
 					@Override
@@ -101,14 +101,14 @@ public class AccountCommands extends Commands {
 		}
 		/**
 		 * Create a new account for given nym and asset and register the new account on the server
+		 * 
 		 * @param serverId
 		 * @param nymId
 		 * @param assetId
 		 * @param accountName
 		 * @throws Exception
 		 */
-		public static void execute(String serverId, String nymId,
-				String assetId, String accountName) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId, String accountName) throws Exception {
 			String accountId = AccountModule.accountAlreadyExists(serverId, nymId, assetId);
 			if (Util.isValidString(accountId)) {
 				Module.showAccount(accountId);
@@ -160,6 +160,7 @@ public class AccountCommands extends Commands {
 		}
 		/**
 		 * Delete account and remove it from the server (fails if it's still used)
+		 * 
 		 * @param accountId
 		 * @throws Exception
 		 */
@@ -172,7 +173,7 @@ public class AccountCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class ShowAccount extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -180,13 +181,14 @@ public class AccountCommands extends Commands {
 		}
 		/**
 		 * Show my account
+		 * 
 		 * @throws Exception
 		 */
 		public static void execute() throws Exception {
 			Module.showMe();
 		}
 	}
-	
+
 	public static class ShowPurse extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -195,18 +197,17 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 		}
 		/**
 		 * Show the purse for given server, nym and asset
+		 * 
 		 * @param serverId
 		 * @param nymId
 		 * @param assetId
 		 * @throws Exception
 		 */
-		public static void execute(String serverId, String nymId, String assetId)
-				throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			String purse = assetModule.loadPurse();
 			if (!Util.isValidString(purse)) {
@@ -216,7 +217,7 @@ public class AccountCommands extends Commands {
 			assetModule.showPurse(purse);
 		}
 	}
-	
+
 	public static class ShowTrxns extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -225,16 +226,14 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId)
-				throws Exception {
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.showTransactions();
 		}
 	}
-	
+
 	public static class ManageUnrealized extends Command {
 		public enum Action {
 			EXECUTE, DISCARD, CANCEL
@@ -244,8 +243,7 @@ public class AccountCommands extends Commands {
 		public void sanity() throws Exception {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
-			AccountModule accountModule = new AccountModule(
-					DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			AccountModule accountModule = new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 			transactions = accountModule.getTransactionsUnrealized();
 			if (transactions.size() == 0)
 				error("There are no unrealized transactions");
@@ -279,23 +277,19 @@ public class AccountCommands extends Commands {
 				final String accept = "A";
 				final String reject = "R";
 				if (instrumentType.equals(InstrumentType.INVOICE))
-					s = readStringFromInput(String.format("%s (%s/%s)",
-							"Accept (and pay the invoice) or reject (and discard)?", accept, reject));
+					s = readStringFromInput(String.format("%s (%s/%s)", "Accept (and pay the invoice) or reject (and discard)?", accept, reject));
 				else if (instrumentType.equals(InstrumentType.CHEQUE))
-					s = readStringFromInput(String.format("%s (%s/%s)",
-							"Accept (and deposit the cheque) or reject (and discard)?", accept, reject));
+					s = readStringFromInput(String.format("%s (%s/%s)", "Accept (and deposit the cheque) or reject (and discard)?", accept, reject));
 				if (s.equalsIgnoreCase(accept))
 					action = Action.EXECUTE;
 				else if (s.equalsIgnoreCase(reject))
 					action = Action.DISCARD;
 			}
 			if (action != null) {
-				execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-						DataModel.getMyAccountId(), transaction, action);
+				execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), transaction, action);
 			}
 		}
-		public static void execute(String serverId, String nymId, String accountId, 
-				Transaction transaction, Action action) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Transaction transaction, Action action) throws Exception {
 			InstrumentType instrumentType = transaction.getInstrumentType();
 			if (instrumentType.equals(InstrumentType.INVOICE)) {
 				String invoice = transaction.getInstrument();
@@ -316,7 +310,7 @@ public class AccountCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class Refresh extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -325,13 +319,10 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.refresh();
 			Module.showMe();
 		}

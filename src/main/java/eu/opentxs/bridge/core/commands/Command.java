@@ -27,7 +27,7 @@ public abstract class Command implements Comparable<Command> {
 			return false;
 		}
 	}
-	
+
 	public static class IsId extends Validator {
 		@Override
 		public boolean validate(String s) {
@@ -38,7 +38,7 @@ public abstract class Command implements Comparable<Command> {
 			return true;
 		}
 	}
-	
+
 	public static class IsIntegerList extends Validator {
 		private Integer min = null;
 		private Integer max = null;
@@ -63,9 +63,7 @@ public abstract class Command implements Comparable<Command> {
 			if (min != null && max != null) {
 				for (Integer i : list) {
 					if (i < min || i > max)
-						return error(String.format("%s [%d,%d]", 
-								Text.VALIDATION_MUST_BE_INTEGER_LIST_RANGE,
-								min, max));
+						return error(String.format("%s [%d,%d]", Text.VALIDATION_MUST_BE_INTEGER_LIST_RANGE, min, max));
 				}
 			}
 			return true;
@@ -77,16 +75,13 @@ public abstract class Command implements Comparable<Command> {
 		public boolean validate(String s) {
 			if (super.validate(s))
 				return true;
-			boolean ok = s.equalsIgnoreCase("true")
-					|| s.equalsIgnoreCase("t")
-					|| s.equalsIgnoreCase("false")
-					|| s.equalsIgnoreCase("f");
+			boolean ok = s.equalsIgnoreCase("true") || s.equalsIgnoreCase("t") || s.equalsIgnoreCase("false") || s.equalsIgnoreCase("f");
 			if (!ok)
 				return error(Text.VALIDATION_MUST_BE_BOOLEAN);
 			return true;
 		}
 	}
-	
+
 	public static class IsUTC extends Validator {
 		@Override
 		public boolean validate(String s) {
@@ -103,7 +98,7 @@ public abstract class Command implements Comparable<Command> {
 			return true;
 		}
 	}
-	
+
 	public static abstract class IsNumber<T> extends Validator {
 		protected T min = null;
 		protected T max = null;
@@ -130,7 +125,7 @@ public abstract class Command implements Comparable<Command> {
 			return true;
 		}
 	}
-	
+
 	public static class IsInteger extends IsNumber<Integer> {
 		@Override
 		public Integer cast(String s) {
@@ -146,12 +141,10 @@ public abstract class Command implements Comparable<Command> {
 		}
 		@Override
 		protected boolean onRangeError() {
-			return error(String.format("%s [%d,%d]", 
-					Text.VALIDATION_MUST_BE_INTEGER_RANGE,
-					min, max));
+			return error(String.format("%s [%d,%d]", Text.VALIDATION_MUST_BE_INTEGER_RANGE, min, max));
 		}
 	}
-	
+
 	public static class IsIntegerOrId extends IsInteger {
 		@Override
 		protected boolean onCastError(String s) {
@@ -160,7 +153,7 @@ public abstract class Command implements Comparable<Command> {
 			return error(Text.VALIDATION_MUST_BE_INTEGER_OR_ID);
 		}
 	}
-	
+
 	public static class IsDouble extends IsNumber<Double> {
 		@Override
 		public Double cast(String s) {
@@ -176,32 +169,29 @@ public abstract class Command implements Comparable<Command> {
 		}
 		@Override
 		protected boolean onRangeError() {
-			return error(String.format("%s [%f,%f]", 
-					Text.VALIDATION_MUST_BE_NUMBER_RANGE,
-					min, max));
+			return error(String.format("%s [%f,%f]", Text.VALIDATION_MUST_BE_NUMBER_RANGE, min, max));
 		}
 	}
-	
+
 	protected static boolean isValidId(String s) {
-		return (Util.isValidString(s) 
-				&& s.length() == ApplProperties.get().getInteger("ids.size"));
+		return (Util.isValidString(s) && s.length() == ApplProperties.get().getInteger("ids.size"));
 	}
-	
+
 	protected static Validator getListValidator(List<?> list) {
 		return getListValidator(list, false);
 	}
-	
+
 	protected static Validator getListValidator(List<?> list, String alt) {
 		return getListValidator(list, Util.isValidString(alt));
 	}
-	
+
 	protected static Validator getListValidator(final List<?> list, final boolean canBeEmpty) {
 		if (list == null || list.size() == 0)
 			return new IsId() {
 				{
 					setCanBeEmpty(canBeEmpty);
 				}
-		};
+			};
 		return new IsIntegerOrId() {
 			{
 				setCanBeEmpty(canBeEmpty);
@@ -209,7 +199,7 @@ public abstract class Command implements Comparable<Command> {
 			}
 		};
 	}
-	
+
 	protected class PlainExtractor extends Extractor<String> {
 		public PlainExtractor() {
 		}
@@ -218,7 +208,7 @@ public abstract class Command implements Comparable<Command> {
 			return s;
 		}
 	}
-	
+
 	protected abstract class Extractor<T> {
 		public abstract String get(T t);
 		public String eval(int index, List<T> list) throws Exception {
@@ -238,7 +228,7 @@ public abstract class Command implements Comparable<Command> {
 			return alt;
 		}
 	}
-	
+
 	protected static abstract class PlainPresenter extends Presenter<String> {
 		@Override
 		protected String id(String s) {
@@ -247,7 +237,7 @@ public abstract class Command implements Comparable<Command> {
 		@Override
 		protected abstract String name(String s);
 	}
-	
+
 	protected static abstract class Presenter<T> {
 		protected abstract String id(T t);
 		protected abstract String name(T t);
@@ -268,21 +258,21 @@ public abstract class Command implements Comparable<Command> {
 			return true;
 		}
 	}
-	
+
 	protected static void print(Object s) {
 		System.out.println(s);
 	}
-	
+
 	public static final Localizer local = Localizer.get();
 
 	private String[] args;
 	public Integer index;
 	public Commands.Category category;
 	public Commands.Sophistication sophistication;
-	
-	protected  void sanity() throws Exception {
+
+	protected void sanity() throws Exception {
 	}
-	
+
 	public Boolean sanityCheck() {
 		Boolean retval = Boolean.TRUE;
 		try {
@@ -293,11 +283,11 @@ public abstract class Command implements Comparable<Command> {
 		}
 		return retval;
 	}
-	
+
 	public boolean introduceArgument(int index) {
 		return true;
 	}
-	
+
 	public Validator getValidator(int index) {
 		return null;
 	}
@@ -364,8 +354,7 @@ public abstract class Command implements Comparable<Command> {
 	protected Boolean getBoolean(int index) throws Exception {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
-		if (args[index].equals("t") || args[index].equals("true")
-				|| args[index].equals("1"))
+		if (args[index].equals("t") || args[index].equals("true") || args[index].equals("1"))
 			return Boolean.TRUE;
 		return Boolean.FALSE;
 	}
@@ -402,8 +391,7 @@ public abstract class Command implements Comparable<Command> {
 		return i;
 	}
 
-	protected List<Integer> getIntegerList(int index, boolean canBeEmpty)
-			throws Exception {
+	protected List<Integer> getIntegerList(int index, boolean canBeEmpty) throws Exception {
 		if (canBeEmpty && !Util.isValidString(args[index]))
 			return new ArrayList<Integer>();
 		return getIntegerList(index);
@@ -447,17 +435,17 @@ public abstract class Command implements Comparable<Command> {
 		}
 		return d;
 	}
-	
+
 	protected UTC getUTC(int index, UTC alt) throws Exception {
 		return (!Util.isValidString(args[index]) ? alt : getUTC(index));
 	}
-	
+
 	protected UTC getUTC(int index, boolean canBeEmpty) throws Exception {
 		if (canBeEmpty && !Util.isValidString(args[index]))
 			return null;
 		return getUTC(index);
 	}
-	
+
 	protected UTC getUTC(int index) throws Exception {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);

@@ -59,14 +59,12 @@ public class Console extends JTextPane {
 		}
 
 		@Override
-		public void insertString(int offset, String string, AttributeSet arg2)
-				throws BadLocationException {
+		public void insertString(int offset, String string, AttributeSet arg2) throws BadLocationException {
 
 			if (isInputStream)
 				arg2 = styleIn.copyAttributes();
 
-			String name = (String) arg2
-					.getAttribute(StyleConstants.NameAttribute);
+			String name = (String) arg2.getAttribute(StyleConstants.NameAttribute);
 			if (!isEscaped && !isKbdOpen && styleInName.equals(name))
 				return;
 			isEscaped = false;
@@ -77,8 +75,7 @@ public class Console extends JTextPane {
 				isPasteIn = false;
 			}
 			if (isPasteOn) {
-				string = paste = Interpreter
-						.escapeNewLines(getClipboardContents());
+				string = paste = Interpreter.escapeNewLines(getClipboardContents());
 				isPasteOn = false;
 			}
 			if (string.equals("\n"))// lg6
@@ -95,8 +92,7 @@ public class Console extends JTextPane {
 	}
 
 	/**
-	 * After the document length is greater than lengthMax, it is truncated at
-	 * its beginning. Truncated length is lengthTruncated.
+	 * After the document length is greater than lengthMax, it is truncated at its beginning. Truncated length is lengthTruncated.
 	 */
 	public static final int lengthMax = 100000;
 	public static final int lengthTruncated = (int) (0.75 * lengthMax);
@@ -129,9 +125,7 @@ public class Console extends JTextPane {
 	private Style styleErr;
 	private String styleInName = "in";
 	/**
-	 * After sending a line into stdIn stream, the flag is set FALSE blocking
-	 * the keyboard. The flag is be reset if the ESCAPE sign arrives into the
-	 * stdErr stream.
+	 * After sending a line into stdIn stream, the flag is set FALSE blocking the keyboard. The flag is be reset if the ESCAPE sign arrives into the stdErr stream.
 	 */
 	private boolean isKbdOpen = false;
 	private boolean isEscaped = false;
@@ -142,8 +136,7 @@ public class Console extends JTextPane {
 	public Console() {
 		super();
 
-		setCaretColor(new Color(ApplProperties.get().getInteger(
-				"console.color.out")));
+		setCaretColor(new Color(ApplProperties.get().getInteger("console.color.out")));
 		StyleContext sc = new StyleContext();
 		Style defaultStyle = sc.getStyle(StyleContext.DEFAULT_STYLE);
 		styleIn = sc.addStyle(styleInName, defaultStyle);
@@ -176,25 +169,25 @@ public class Console extends JTextPane {
 
 				isInputStream = true;
 				switch (e.getKeyCode()) {
-				case 38:// ArrowUp
-					isArrow();
-					in.println(ConsoleApplication.UP);
-					e.consume();
-					break;
-				case 40:// ArrowDown
-					isArrow();
-					in.println(ConsoleApplication.DOWN);
-					e.consume();
-					break;
+					case 38 :// ArrowUp
+						isArrow();
+						in.println(ConsoleApplication.UP);
+						e.consume();
+						break;
+					case 40 :// ArrowDown
+						isArrow();
+						in.println(ConsoleApplication.DOWN);
+						e.consume();
+						break;
 				}
 
 				switch (e.getKeyChar()) {
-				case CTR_V:// ^v
-					isPasteOn = true;
-					break;
-				case PASTE_IN:// ^b
-					isPasteIn = true;
-					break;
+					case CTR_V :// ^v
+						isPasteOn = true;
+						break;
+					case PASTE_IN :// ^b
+						isPasteIn = true;
+						break;
 				}
 				super.keyPressed(e);
 			}
@@ -202,35 +195,34 @@ public class Console extends JTextPane {
 			@Override
 			public void keyTyped(KeyEvent e) {
 				switch (e.getKeyChar()) {
-				case PASTE_IN:// ^b
-					in.println(paste);
-					isKbdOpen = false;
-					isInputStream = false;
-					break;
-				case CR:// \r
-					break;
-				case NL:// \n
-					try {
-						if (isArrow)
-							isArrow = false;
-						in.println(doc.getText(changeLimit,
-								doc.getLength() - changeLimit).trim());
+					case PASTE_IN :// ^b
+						in.println(paste);
+						isKbdOpen = false;
 						isInputStream = false;
-						setCaretPosition(getDocument().getLength());
-					} catch (BadLocationException e1) {
-						throw new RuntimeException(e1);
-					}
-					isKbdOpen = false;
-					;
-					break;
-				case ESCAPE:
-					in.println(ConsoleApplication.ESCAPE);
-					isEscaped = true;
-					isKbdOpen = false;
-					isInputStream = false;
-					isArrow = false;
-					break;
-				default:
+						break;
+					case CR :// \r
+						break;
+					case NL :// \n
+						try {
+							if (isArrow)
+								isArrow = false;
+							in.println(doc.getText(changeLimit, doc.getLength() - changeLimit).trim());
+							isInputStream = false;
+							setCaretPosition(getDocument().getLength());
+						} catch (BadLocationException e1) {
+							throw new RuntimeException(e1);
+						}
+						isKbdOpen = false;
+						;
+						break;
+					case ESCAPE :
+						in.println(ConsoleApplication.ESCAPE);
+						isEscaped = true;
+						isKbdOpen = false;
+						isInputStream = false;
+						isArrow = false;
+						break;
+					default :
 				}
 			}
 		});
@@ -268,11 +260,10 @@ public class Console extends JTextPane {
 						try {
 							isKbdOpen = true;
 							switch (chunk) {
-							default:
-								doc.insertString(doc.getLength(),
-										String.valueOf(chunk), styleOut);
-								if (!isArrow)
-									changeLimit = doc.getLength();
+								default :
+									doc.insertString(doc.getLength(), String.valueOf(chunk), styleOut);
+									if (!isArrow)
+										changeLimit = doc.getLength();
 							}
 						} catch (BadLocationException e) {
 							throw new RuntimeException(e);
@@ -295,8 +286,7 @@ public class Console extends JTextPane {
 				protected void process(List<Character> chunks) {
 					for (Character chunk : chunks)
 						try {
-							doc.insertString(doc.getLength(),
-									String.valueOf(chunk), styleErr);
+							doc.insertString(doc.getLength(), String.valueOf(chunk), styleErr);
 							changeLimit = doc.getLength();
 						} catch (BadLocationException e) {
 							throw new RuntimeException(e);
@@ -315,12 +305,10 @@ public class Console extends JTextPane {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		// odd: the Object param of getContents is not currently used
 		Transferable contents = clipboard.getContents(null);
-		boolean hasTransferableText = (contents != null)
-				&& contents.isDataFlavorSupported(DataFlavor.stringFlavor);
+		boolean hasTransferableText = (contents != null) && contents.isDataFlavorSupported(DataFlavor.stringFlavor);
 		if (hasTransferableText) {
 			try {
-				result = (String) contents
-						.getTransferData(DataFlavor.stringFlavor);
+				result = (String) contents.getTransferData(DataFlavor.stringFlavor);
 			} catch (UnsupportedFlavorException ex) {
 				// highly unlikely since we are using a standard DataFlavor
 				System.out.println(ex);

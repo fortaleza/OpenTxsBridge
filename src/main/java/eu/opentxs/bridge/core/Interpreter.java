@@ -63,9 +63,7 @@ public class Interpreter extends ConsoleApplication {
 	}
 
 	private void manageHistory() {
-		String commandName = ApplProperties.get().getBoolean(
-				"console.history.fullNames") ? command.getNameLocal() : command
-				.getPseudoLocal();
+		String commandName = ApplProperties.get().getBoolean("console.history.fullNames") ? command.getNameLocal() : command.getPseudoLocal();
 		if (history.size() == 0 || !history.contains(commandName)) {
 			history.add(0, commandName);
 		} else {
@@ -130,122 +128,119 @@ public class Interpreter extends ConsoleApplication {
 
 	private void setSignal(Signal signal) {
 		switch (status) {
-		case CommandExpected: {
-			arguments = null;
-			if (signal.equals(Signal.Next)) {
-				if (line.indexOf(ESCAPE) != -1) {
-					System.err.println();
-					System.err.println(Text.COMMAND_ABORTED);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-					break;
-				}
-				if (line.indexOf(UP) != -1) {
-					status = Status.CommandExpected;
-					printArrorPrompt(getFromHistoryUp(true));
-					break;
-				}
-				if (line.indexOf(DOWN) != -1) {
-					status = Status.CommandExpected;
-					printArrorPrompt(getFromHistoryUp(false));
-					break;
-				}
-				if (line.equals("")) {
-					printPrompt(promptCommand);
-					break;
-				}
-				
-				String commandName = local.getKeyForValue(line);
-				if (commandName != null) {
-					int pseudo = commandName.indexOf(".pseudo");
-					if (pseudo != -1)
-						commandName = commandName.substring(0, pseudo);					
-					command = Commands.commands.get(commandName);
-				} else
-					command = Commands.commands.get(line);
-				
-				if (command == null) {
-					System.err.println(Text.COMMAND_UNKNOWN);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-					break;
-				}	
-				manageHistory();
-				if (!command.sanityCheck()) {
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-					break;
-				}				
-				if (arguments != null) {
-					command.actionResult(arguments);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-					break;
-				}
-				arguments = command.getArguments();
-				if (arguments == null) {
-					command.actionResult(arguments);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-				} else {
-					argumentIndex = 0;
-					status = Status.NextArgumentExpected;
-					while (argumentIndex < arguments.length
-							&& !command.introduceArgument(argumentIndex)) {
-						arguments[argumentIndex++] = null;
+			case CommandExpected : {
+				arguments = null;
+				if (signal.equals(Signal.Next)) {
+					if (line.indexOf(ESCAPE) != -1) {
+						System.err.println();
+						System.err.println(Text.COMMAND_ABORTED);
+						status = Status.CommandExpected;
+						printPrompt(promptCommand);
+						break;
 					}
-					if (argumentIndex < arguments.length) {
-						printPrompt(getArgumentPrompt());
-					} else {
+					if (line.indexOf(UP) != -1) {
+						status = Status.CommandExpected;
+						printArrorPrompt(getFromHistoryUp(true));
+						break;
+					}
+					if (line.indexOf(DOWN) != -1) {
+						status = Status.CommandExpected;
+						printArrorPrompt(getFromHistoryUp(false));
+						break;
+					}
+					if (line.equals("")) {
+						printPrompt(promptCommand);
+						break;
+					}
+
+					String commandName = local.getKeyForValue(line);
+					if (commandName != null) {
+						int pseudo = commandName.indexOf(".pseudo");
+						if (pseudo != -1)
+							commandName = commandName.substring(0, pseudo);
+						command = Commands.commands.get(commandName);
+					} else
+						command = Commands.commands.get(line);
+
+					if (command == null) {
+						System.err.println(Text.COMMAND_UNKNOWN);
+						status = Status.CommandExpected;
+						printPrompt(promptCommand);
+						break;
+					}
+					manageHistory();
+					if (!command.sanityCheck()) {
+						status = Status.CommandExpected;
+						printPrompt(promptCommand);
+						break;
+					}
+					if (arguments != null) {
 						command.actionResult(arguments);
 						status = Status.CommandExpected;
 						printPrompt(promptCommand);
+						break;
+					}
+					arguments = command.getArguments();
+					if (arguments == null) {
+						command.actionResult(arguments);
+						status = Status.CommandExpected;
+						printPrompt(promptCommand);
+					} else {
+						argumentIndex = 0;
+						status = Status.NextArgumentExpected;
+						while (argumentIndex < arguments.length && !command.introduceArgument(argumentIndex)) {
+							arguments[argumentIndex++] = null;
+						}
+						if (argumentIndex < arguments.length) {
+							printPrompt(getArgumentPrompt());
+						} else {
+							command.actionResult(arguments);
+							status = Status.CommandExpected;
+							printPrompt(promptCommand);
+						}
 					}
 				}
+				break;
 			}
-			break;
-		}
-		case NextArgumentExpected: {
-			if (signal.equals(Signal.Next)) {
-				if (line.indexOf(ESCAPE) != -1) {
-					System.err.println();
-					System.err.println(Text.COMMAND_ABORTED);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
-					break;
-				}
-				while (!command.validate(argumentIndex, line)) {
-					printPrompt(getArgumentPrompt());
-					readLine();
-				}
-				arguments[argumentIndex++] = line;
-				if (argumentIndex < arguments.length) {
-					while (argumentIndex < arguments.length
-							&& !command.introduceArgument(argumentIndex)) {
-						arguments[argumentIndex++] = null;
+			case NextArgumentExpected : {
+				if (signal.equals(Signal.Next)) {
+					if (line.indexOf(ESCAPE) != -1) {
+						System.err.println();
+						System.err.println(Text.COMMAND_ABORTED);
+						status = Status.CommandExpected;
+						printPrompt(promptCommand);
+						break;
 					}
-					if (argumentIndex < arguments.length) {
+					while (!command.validate(argumentIndex, line)) {
 						printPrompt(getArgumentPrompt());
 						readLine();
+					}
+					arguments[argumentIndex++] = line;
+					if (argumentIndex < arguments.length) {
+						while (argumentIndex < arguments.length && !command.introduceArgument(argumentIndex)) {
+							arguments[argumentIndex++] = null;
+						}
+						if (argumentIndex < arguments.length) {
+							printPrompt(getArgumentPrompt());
+							readLine();
+						} else {
+							command.actionResult(arguments);
+							status = Status.CommandExpected;
+							printPrompt(promptCommand);
+						}
 					} else {
 						command.actionResult(arguments);
 						status = Status.CommandExpected;
 						printPrompt(promptCommand);
 					}
-				} else {
-					command.actionResult(arguments);
-					status = Status.CommandExpected;
-					printPrompt(promptCommand);
 				}
+				break;
 			}
-			break;
-		}
 		}
 	}
 
 	private String getArgumentPrompt() {
-		return String.format("%s%s", arguments[argumentIndex].trim(),
-				promptArgument);
+		return String.format("%s%s", arguments[argumentIndex].trim(), promptArgument);
 	}
 
 	@Override

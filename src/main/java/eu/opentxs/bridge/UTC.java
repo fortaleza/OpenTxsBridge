@@ -1,13 +1,13 @@
 package eu.opentxs.bridge;
 
 public class UTC extends com.southpark.utc.UTC {
-	
+
 	private static final long serialVersionUID = 1L;
-	
+
 	private UTC() {
 		super();
 	}
-	
+
 	public UTC(String s) {
 		super(s);
 	}
@@ -24,18 +24,18 @@ public class UTC extends com.southpark.utc.UTC {
 		}
 		return null;
 	}
-	
+
 	public static String timeToString(String s) {
 		UTC utc = getDateUTC(s);
 		if (utc != null)
 			return timeToString(utc);
 		return "";
 	}
-	
+
 	public boolean isBefore(UTC utc) {
 		return (getSeconds() < utc.getSeconds());
 	}
-	
+
 	public boolean isAfter(UTC utc) {
 		return (getSeconds() > utc.getSeconds());
 	}

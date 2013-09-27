@@ -16,11 +16,10 @@ public class Contact implements Serializable {
 
 	public static HibFactory getDatabase() {
 		if (database == null)
-			database = HibFactory.getByName(ApplProperties.get().getString(
-					"main.database.folder"));
+			database = HibFactory.getByName(ApplProperties.get().getString("main.database.folder"));
 		return database;
 	}
-	
+
 	public static void closeDatabase() {
 		if (database != null)
 			database.closeDatabase();

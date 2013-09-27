@@ -35,7 +35,7 @@ public class HackCommands extends Commands {
 		addToCommands(new Hack1(), Category.HACK, Sophistication.TOP);
 		addToCommands(new Hack2(), Category.HACK, Sophistication.TOP);
 	}
-	
+
 	public static class Reset extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -55,7 +55,7 @@ public class HackCommands extends Commands {
 			OpenTransactions.reset();
 		}
 	}
-	
+
 	public static class Ping extends Command {
 		private List<String> serverIds;
 		private List<String> nymIds;
@@ -109,7 +109,7 @@ public class HackCommands extends Commands {
 			nymModule.pingServer();
 		}
 	}
-	
+
 	public static class Time extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -119,7 +119,7 @@ public class HackCommands extends Commands {
 			Module.showTime();
 		}
 	}
-	
+
 	public static class Download extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -128,13 +128,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.downloadFiles();
 		}
 	}
@@ -147,18 +144,15 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.processInbox();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
 		}
 	}
-	
+
 	public static class ProcessIncome extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -167,18 +161,15 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.processIncome();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
 		}
 	}
-	
+
 	public static class Verify extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -187,17 +178,14 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.verifyLastReceipt();
 		}
 	}
-	
+
 	public static class Inbox extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -206,13 +194,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.showInbox();
 		}
 	}
@@ -225,17 +210,14 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId,
-					accountId);
+		public static void execute(String serverId, String nymId, String accountId) throws Exception {
+			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.showOutbox();
 		}
 	}
-	
+
 	public static class Nymbox extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -251,7 +233,7 @@ public class HackCommands extends Commands {
 			nymModule.showNymbox();
 		}
 	}
-	
+
 	public static class PayInbox extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -260,16 +242,14 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 		}
-		public static void execute(String serverId, String nymId, String assetId)
-				throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.showPayInbox();
 		}
 	}
-	
+
 	public static class PayOutbox extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -278,16 +258,14 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId());
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 		}
-		public static void execute(String serverId, String nymId, String assetId)
-				throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.showPayOutbox();
 		}
 	}
-	
+
 	public static class QueryAsset extends Command {
 		private List<String> serverIds;
 		private List<String> nymIds;
@@ -348,13 +326,12 @@ public class HackCommands extends Commands {
 			String assetId = new PlainExtractor().eval(2, assetIds, DataModel.getMyAssetId());
 			execute(serverId, nymId, assetId);
 		}
-		public static void execute(String serverId, String nymId, String assetId)
-				throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.queryAsset();
 		}
 	}
-	
+
 	public static class Resync extends Command {
 		private List<String> serverIds;
 		private List<String> nymIds;
@@ -408,7 +385,7 @@ public class HackCommands extends Commands {
 			nymModule.resyncNymWithServer();
 		}
 	}
-	
+
 	public static class Hack1 extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -417,8 +394,7 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			new AccountModule(DataModel.getMyServerId(),
-					DataModel.getMyNymId(), DataModel.getMyAccountId()).hack1();
+			new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId()).hack1();
 		}
 	}
 
@@ -429,9 +405,8 @@ public class HackCommands extends Commands {
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {		
-			new AccountModule(DataModel.getMyServerId(),
-					DataModel.getMyNymId(), DataModel.getMyAccountId()).hack2();
+		protected void action(String[] args) throws Exception {
+			new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId()).hack2();
 		}
 	}
 

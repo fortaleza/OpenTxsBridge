@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.hibernate.Session;
 
-
 public class ContactAccount implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -27,7 +26,7 @@ public class ContactAccount implements Serializable {
 	public String getServerId() {
 		return serverId;
 	}
-	
+
 	public void setAccountId(String accountId) {
 		this.accountId = accountId;
 	}
@@ -40,7 +39,7 @@ public class ContactAccount implements Serializable {
 	public void setServerId(String serverId) {
 		this.serverId = serverId;
 	}
-	
+
 	public static void main(String[] args) {
 		{
 			add("aaa", "ggg", "xxx", "localhost");
@@ -51,10 +50,10 @@ public class ContactAccount implements Serializable {
 			delete("eee");
 			delete("ddd");
 		}
-//		{
-//			ContactAccount contactAccount = get("xxx", "ggg");
-//			System.out.println(contactAccount);
-//		}
+		// {
+		// ContactAccount contactAccount = get("xxx", "ggg");
+		// System.out.println(contactAccount);
+		// }
 		{
 			List<ContactAccount> contactAccounts = getList("xxx");
 			for (ContactAccount contactAccount : contactAccounts)
@@ -102,7 +101,7 @@ public class ContactAccount implements Serializable {
 		}
 		return (contactAccount != null);
 	}
-	
+
 	public static ContactAccount get(String accountId) {
 		Session sess = null;
 		ContactAccount contactAccount = null;
@@ -116,7 +115,7 @@ public class ContactAccount implements Serializable {
 		}
 		return contactAccount;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static List<ContactAccount> getList() {
 		List<ContactAccount> contactAccounts = null;
@@ -132,7 +131,7 @@ public class ContactAccount implements Serializable {
 		}
 		return contactAccounts;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static List<ContactAccount> getList(String nymId) {
 		List<ContactAccount> contactAccounts = null;
@@ -149,7 +148,7 @@ public class ContactAccount implements Serializable {
 		}
 		return contactAccounts;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static List<ContactAccount> getList(String serverId, String assetId) {
 		List<ContactAccount> contactAccounts = null;
@@ -167,7 +166,7 @@ public class ContactAccount implements Serializable {
 		}
 		return contactAccounts;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("%s: %s %s", accountId, assetId, nymId);

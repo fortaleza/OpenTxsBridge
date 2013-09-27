@@ -19,9 +19,9 @@ public class ServerCommands extends Commands {
 		addToCommands(new EditServer(), Category.SERVER, Sophistication.SIMPLE);
 		addToCommands(new DeleteServer(), Category.SERVER, Sophistication.SIMPLE);
 		addToCommands(new ShowServerContract(), Category.SERVER, Sophistication.ADVANCED);
-		//addToCommands(new ShowServerAccounts(), Category.SERVER, Sophistication.ADVANCED);
+		// addToCommands(new ShowServerAccounts(), Category.SERVER, Sophistication.ADVANCED);
 	}
-	
+
 	public static class CreateServer extends Command {
 		private List<String> nymIds;
 		@Override
@@ -53,8 +53,7 @@ public class ServerCommands extends Commands {
 		protected void action(String[] args) throws Exception {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			String definition = readStringFromInput("Paste a server definition here");
-			if (Util.isValidString(definition)
-					&& isValidServerDefinition(definition)) {
+			if (Util.isValidString(definition) && isValidServerDefinition(definition)) {
 				definition = Interpreter.restoreNewLines(definition);
 			} else {
 				print("This does not look like a server definition");
@@ -66,8 +65,7 @@ public class ServerCommands extends Commands {
 			}
 			execute(nymId, definition);
 		}
-		public static void execute(String nymId, String definition)
-				throws Exception {
+		public static void execute(String nymId, String definition) throws Exception {
 			String serverId = ServerModule.createServer(nymId, definition);
 			if (readBooleanFromInput("Would you like to save the new server contract to a file?")) {
 				String contract = ServerModule.getServerContract(serverId);
@@ -99,12 +97,11 @@ public class ServerCommands extends Commands {
 		}
 		public static void execute(String contract) throws Exception {
 			String serverId = ServerModule.addServer(contract);
-			if (Module.getServerIds().size() == 1
-					|| readBooleanFromInput("Would you like to set it as your server?"))
+			if (Module.getServerIds().size() == 1 || readBooleanFromInput("Would you like to set it as your server?"))
 				Module.setMyServerId(serverId);
 		}
 	}
-	
+
 	public static class EditServer extends Command {
 		private List<String> serverIds;
 		@Override
@@ -136,12 +133,11 @@ public class ServerCommands extends Commands {
 			execute(serverId, serverName);
 		}
 
-		public static void execute(String serverId, String serverName)
-				throws Exception {
+		public static void execute(String serverId, String serverName) throws Exception {
 			ServerModule.renameServer(serverId, serverName);
 		}
 	}
-	
+
 	public static class ShowServerContract extends Command {
 		private List<String> serverIds;
 		@Override
@@ -177,7 +173,7 @@ public class ServerCommands extends Commands {
 				writeStringToFile(Text.FOLDER_SERVERS, Extension.CONTRACT, contract);
 		}
 	}
-	
+
 	public static class ShowServerAccounts extends Command {
 		private List<String> serverIds;
 		@Override

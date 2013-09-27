@@ -22,30 +22,30 @@ public class BusinessCommands extends Commands {
 
 	public static void init() {
 		addToCommands(new Transfer(), Category.BUSINESS, Sophistication.MINI);
-		
+
 		addToCommands(new MoveAccountToPurse(), Category.BUSINESS, Sophistication.ADVANCED);
 		addToCommands(new MovePurseToAccount(), Category.BUSINESS, Sophistication.ADVANCED);
-		
+
 		addToCommands(new ExportPurseToCash(), Category.BUSINESS, Sophistication.ADVANCED);
 		addToCommands(new ImportCashToPurse(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
-		
+
 		addToCommands(new ExportAccountToCash(), Category.BUSINESS, Sophistication.MINI);
 		addToCommands(new ImportCashToAccount(), Category.BUSINESS_EXTRA, Sophistication.MINI);
-		
+
 		addToCommands(new WriteVoucher(), Category.BUSINESS, Sophistication.SIMPLE);
 		addToCommands(new ExecuteVoucher(), Category.BUSINESS_EXTRA, Sophistication.SIMPLE);
-		
+
 		addToCommands(new WriteCheque(), Category.BUSINESS, Sophistication.ADVANCED);
 		addToCommands(new CancelCheque(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new ExcecuteCheque(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new DiscardCheque(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
-		
+
 		addToCommands(new WriteInvoice(), Category.BUSINESS, Sophistication.ADVANCED);
 		addToCommands(new CancelInvoice(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new ExecuteInvoice(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new DiscardInvoice(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 	}
-	
+
 	public static class Transfer extends Command {
 		private List<ContactAccount> contactAccounts;
 		@Override
@@ -89,12 +89,9 @@ public class BusinessCommands extends Commands {
 				}
 			}).eval(1, contactAccounts);
 			String note = getString(2, true);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume, hisAccountId, note);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume, hisAccountId, note);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume, String hisAccountId,
-				String note) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Double volume, String hisAccountId, String note) throws Exception {
 			if (hisAccountId.equals(accountId))
 				error("Your account and his account are the same");
 			if (!ContactModule.verifyContactAccount(hisAccountId)) {
@@ -102,8 +99,7 @@ public class BusinessCommands extends Commands {
 					String hisNymId = readStringFromInput("Enter nym id");
 					String name = readStringFromInput("Enter nym name");
 					CreateContact.execute(hisNymId, name);
-					CreateContactAccount.execute(
-							hisAccountId, DataModel.getMyAssetId(), hisNymId, DataModel.getMyServerId());
+					CreateContactAccount.execute(hisAccountId, DataModel.getMyAssetId(), hisNymId, DataModel.getMyServerId());
 				}
 			}
 			AccountModule.checkAvailableFunds(accountId, volume);
@@ -132,11 +128,9 @@ public class BusinessCommands extends Commands {
 		@Override
 		protected void action(String[] args) throws Exception {
 			Double volume = getDouble(0);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Double volume) throws Exception {
 			AccountModule.checkAvailableFunds(accountId, volume);
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			accountModule.moveAccountToPurse(volume);
@@ -151,8 +145,7 @@ public class BusinessCommands extends Commands {
 		public void sanity() throws Exception {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
-			AssetModule assetModule = new AssetModule(
-					DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
+			AssetModule assetModule = new AssetModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 			String purse = assetModule.loadPurse();
 			if (!Util.isValidString(purse))
 				error("Your purse seems to be empty");
@@ -162,8 +155,7 @@ public class BusinessCommands extends Commands {
 		public boolean introduceArgument(int index) {
 			if (index == 0) {
 				try {
-					AccountCommands.ShowPurse.execute(
-							DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
+					AccountCommands.ShowPurse.execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 				} catch (Exception e) {
 				}
 			}
@@ -184,11 +176,9 @@ public class BusinessCommands extends Commands {
 		@Override
 		protected void action(String[] args) throws Exception {
 			List<Integer> indices = getIntegerList(0, true);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId(), DataModel.getMyAccountId(), indices);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId(), DataModel.getMyAccountId(), indices);
 		}
-		public static void execute(String serverId, String nymId, String assetId,
-				String accountId, List<Integer> indices) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId, String accountId, List<Integer> indices) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			String purse = assetModule.loadPurse();
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
@@ -197,7 +187,6 @@ public class BusinessCommands extends Commands {
 			AccountCommands.ShowAccount.execute();
 		}
 	}
-	
 
 	public static class ImportCashToAccount extends Command {
 		@Override
@@ -222,11 +211,9 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(cash))
 					error("No vaild cash was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId(), DataModel.getMyAccountId(), cash);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId(), DataModel.getMyAccountId(), cash);
 		}
-		public static void execute(String serverId, String nymId, String assetId, 
-				String accountId, String cash) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId, String accountId, String cash) throws Exception {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.showPurse(cash);
 			if (readBooleanFromInput("Are you sure you want to import this cash?")) {
@@ -237,7 +224,7 @@ public class BusinessCommands extends Commands {
 			AccountCommands.ShowAccount.execute();
 		}
 	}
-	
+
 	public static class ExportAccountToCash extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -280,17 +267,13 @@ public class BusinessCommands extends Commands {
 					return contact.getNymId();
 				}
 			}).eval(1, contacts);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume, hisNymId);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume, hisNymId);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume, String hisNymId) throws Exception {
-			///
+		public static void execute(String serverId, String nymId, String accountId, Double volume, String hisNymId) throws Exception {
+			// /
 			if (!Util.isValidString(hisNymId))
-				error(String.format("%s: %s", 
-						Text.FEATURE_DISABLED_SERVER_BUG, 
-						"hisNymId cannot be empty"));
-			///
+				error(String.format("%s: %s", Text.FEATURE_DISABLED_SERVER_BUG, "hisNymId cannot be empty"));
+			// /
 			if (!ContactModule.verifyContact(hisNymId)) {
 				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
 					String name = readStringFromInput("Enter nym name");
@@ -307,7 +290,7 @@ public class BusinessCommands extends Commands {
 			AccountCommands.ShowAccount.execute();
 		}
 	}
-	
+
 	public static class ExportPurseToCash extends Command {
 		private int purseSize;
 		private List<Contact> contacts;
@@ -315,8 +298,7 @@ public class BusinessCommands extends Commands {
 		public void sanity() throws Exception {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
-			AssetModule assetModule = new AssetModule(
-					DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
+			AssetModule assetModule = new AssetModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 			String purse = assetModule.loadPurse();
 			if (!Util.isValidString(purse))
 				error("Your purse seems to be empty");
@@ -326,8 +308,7 @@ public class BusinessCommands extends Commands {
 		public boolean introduceArgument(int index) {
 			if (index == 0) {
 				try {
-					AccountCommands.ShowPurse.execute(
-							DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
+					AccountCommands.ShowPurse.execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 				} catch (Exception e) {
 				}
 			} else if (index == 1) {
@@ -369,17 +350,13 @@ public class BusinessCommands extends Commands {
 					return contact.getNymId();
 				}
 			}).eval(1, contacts);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAssetId(), indices, hisNymId);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId(), indices, hisNymId);
 		}
-		public static void execute(String serverId, String nymId, String assetId,
-				List<Integer> indices, String hisNymId) throws Exception {
-			///
+		public static void execute(String serverId, String nymId, String assetId, List<Integer> indices, String hisNymId) throws Exception {
+			// /
 			if (!Util.isValidString(hisNymId))
-				error(String.format("%s: %s", 
-						Text.FEATURE_DISABLED_SERVER_BUG, 
-						"hisNymId cannot be empty"));
-			///
+				error(String.format("%s: %s", Text.FEATURE_DISABLED_SERVER_BUG, "hisNymId cannot be empty"));
+			// /
 			if (!ContactModule.verifyContact(hisNymId)) {
 				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
 					String name = readStringFromInput("Enter nym name");
@@ -432,7 +409,7 @@ public class BusinessCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class WriteVoucher extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -476,12 +453,9 @@ public class BusinessCommands extends Commands {
 				}
 			}).eval(1, contacts);
 			String note = getString(2, true);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume, hisNymId, note);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume, hisNymId, note);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume, String hisNymId, 
-				String note) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Double volume, String hisNymId, String note) throws Exception {
 			if (!ContactModule.verifyContact(hisNymId)) {
 				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
 					String name = readStringFromInput("Enter nym name");
@@ -498,7 +472,7 @@ public class BusinessCommands extends Commands {
 			AccountCommands.ShowAccount.execute();
 		}
 	}
-	
+
 	public static class ExecuteVoucher extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -522,11 +496,9 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(voucher))
 					error("No vaild voucher was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), voucher);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), voucher);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, String voucher) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, String voucher) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			Double volume = accountModule.verifyVoucher(voucher);
 			print(String.format("Voucher value: %.2f", volume));
@@ -536,7 +508,7 @@ public class BusinessCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class WriteCheque extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -587,12 +559,9 @@ public class BusinessCommands extends Commands {
 			}).eval(1, contacts);
 			String note = getString(2, true);
 			UTC expiry = getUTC(3, true);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume, hisNymId, note, expiry);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume, hisNymId, note, expiry);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume, String hisNymId, 
-				String note, UTC expiry) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Double volume, String hisNymId, String note, UTC expiry) throws Exception {
 			if (!ContactModule.verifyContact(hisNymId)) {
 				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
 					String name = readStringFromInput("Enter nym name");
@@ -607,7 +576,7 @@ public class BusinessCommands extends Commands {
 				writeStringToFile(Text.FOLDER_CHEQUES, Extension.CONTRACT, cheque);
 		}
 	}
-	
+
 	public static class ExcecuteCheque extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -631,11 +600,9 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(cheque))
 					error("No vaild cheque was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), cheque);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), cheque);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, String cheque) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, String cheque) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			Double volume = accountModule.verifyCheque(cheque);
 			print(String.format("Cheque value: %.2f", volume));
@@ -645,7 +612,7 @@ public class BusinessCommands extends Commands {
 			}
 		}
 	}
-	
+
 	public static class CancelCheque extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -669,17 +636,15 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(cheque))
 					error("No vaild cheque was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), cheque);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), cheque);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, String cheque) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, String cheque) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			if (readBooleanFromInput("Are you sure you want to cancel this cheque?"))
 				accountModule.cancelCheque(cheque);
 		}
 	}
-	
+
 	public static class DiscardCheque extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -705,14 +670,13 @@ public class BusinessCommands extends Commands {
 			}
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), cheque);
 		}
-		public static void execute(String serverId, String nymId,
-				String cheque) throws Exception {
+		public static void execute(String serverId, String nymId, String cheque) throws Exception {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			if (readBooleanFromInput("Are you sure you want to discard this cheque?"))
 				nymModule.discardCheque(cheque);
 		}
 	}
-	
+
 	public static class WriteInvoice extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -756,12 +720,9 @@ public class BusinessCommands extends Commands {
 				}
 			}).eval(1, contacts);
 			String note = getString(2, true);
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), volume, hisNymId, note);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), volume, hisNymId, note);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, Double volume, String hisNymId, 
-				String note) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, Double volume, String hisNymId, String note) throws Exception {
 			if (!ContactModule.verifyContact(hisNymId)) {
 				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
 					String name = readStringFromInput("Enter nym name");
@@ -776,7 +737,7 @@ public class BusinessCommands extends Commands {
 				writeStringToFile(Text.FOLDER_CHEQUES, Extension.CONTRACT, invoice);
 		}
 	}
-	
+
 	public static class CancelInvoice extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -800,17 +761,15 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(invoice))
 					error("No vaild invoice was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), invoice);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), invoice);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, String invoice) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, String invoice) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			if (readBooleanFromInput("Are you sure you want to cancel this invoice?"))
 				accountModule.cancelInvoice(invoice);
 		}
 	}
-	
+
 	public static class DiscardInvoice extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -836,14 +795,13 @@ public class BusinessCommands extends Commands {
 			}
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), invoice);
 		}
-		public static void execute(String serverId, String nymId,
-				String invoice) throws Exception {
+		public static void execute(String serverId, String nymId, String invoice) throws Exception {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			if (readBooleanFromInput("Are you sure you want to discard this invoice?"))
 				nymModule.discardInvoice(invoice);
 		}
 	}
-	
+
 	public static class ExecuteInvoice extends Command {
 		@Override
 		public void sanity() throws Exception {
@@ -867,11 +825,9 @@ public class BusinessCommands extends Commands {
 				if (!Util.isValidString(invoice))
 					error("No vaild invoice was supplied");
 			}
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(),
-					DataModel.getMyAccountId(), invoice);
+			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), invoice);
 		}
-		public static void execute(String serverId, String nymId,
-				String accountId, String invoice) throws Exception {
+		public static void execute(String serverId, String nymId, String accountId, String invoice) throws Exception {
 			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
 			Double volume = accountModule.verifyInvoice(invoice);
 			print(String.format("Invoice value: %.2f", volume));

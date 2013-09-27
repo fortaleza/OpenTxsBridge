@@ -8,13 +8,13 @@ import eu.opentxs.bridge.core.commands.Commands;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class WalletCommands extends Commands {
-	
+
 	public static void init() {
 		addToCommands(new CreateWallet(), Category.WALLET, Sophistication.ADVANCED);
 		addToCommands(new SetWallet(), Category.WALLET, Sophistication.ADVANCED);
 		addToCommands(new ShowWallet(), Category.WALLET, Sophistication.MINI);
 	}
-	
+
 	public static class CreateWallet extends Command {
 		@Override
 		public Validator getValidator(int index) {
@@ -39,7 +39,7 @@ public class WalletCommands extends Commands {
 			Module.loadAndShowWallet(walletId);
 		}
 	}
-	
+
 	public static class SetWallet extends Command {
 		private List<String> ids;
 		@Override
@@ -76,7 +76,7 @@ public class WalletCommands extends Commands {
 			Module.loadAndShowWallet(walletId);
 		}
 	}
-	
+
 	public static class ShowWallet extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {

@@ -43,8 +43,7 @@ import eu.opentxs.bridge.core.modules.OTAPI;
 
 public class OpenTransactions extends Interpreter {
 
-	private static Logger logger = Logger.getLogger(OpenTransactions.class
-			.getName());
+	private static Logger logger = Logger.getLogger(OpenTransactions.class.getName());
 
 	public static void main(String[] args) throws Exception {
 		new OpenTransactions().run(null);
@@ -96,14 +95,13 @@ public class OpenTransactions extends Interpreter {
 							output.setPassword(password, password.length());
 						}
 					};
-					if (NativeLoader.getInstance().setupPasswordCallback(
-							javaPasswordCaller, javaPasswordCallback)) {
+					if (NativeLoader.getInstance().setupPasswordCallback(javaPasswordCaller, javaPasswordCallback)) {
 						try {
 							new FileInputStream(getLockFile());
 						} catch (FileNotFoundException e) {
 							e.getMessage();
 						}
-						//if (NativeLoader.getInstance().loadWallet())
+						// if (NativeLoader.getInstance().loadWallet())
 						return 1;
 					}
 				}
@@ -124,8 +122,7 @@ public class OpenTransactions extends Interpreter {
 	private static class PasswordImageMgmt implements IPasswordImage {
 		@Override
 		public String getPasswordImageFromUser(String value) {
-			URL url = ClassLoader.getSystemResource(ApplProperties.get()
-					.getString("password.image"));
+			URL url = ClassLoader.getSystemResource(ApplProperties.get().getString("password.image"));
 			return url.getPath().toString();
 		}
 
@@ -159,10 +156,9 @@ public class OpenTransactions extends Interpreter {
 	@Override
 	public void run(ConsoleFrame console) {
 		if (console != null) {
-			try {/** Application icon */
-				console.setIconImage(ImageIO.read(ClassLoader
-						.getSystemResource(ApplProperties.get().getString(
-								"icon.image"))));
+			try {
+				/** Application icon */
+				console.setIconImage(ImageIO.read(ClassLoader.getSystemResource(ApplProperties.get().getString("icon.image"))));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -170,10 +166,7 @@ public class OpenTransactions extends Interpreter {
 		if (ApplProperties.get().getBoolean("password.image.show")) {
 			JLabel passwordLabel = null;
 			try {
-				passwordLabel = new JLabel(new ImageIcon(
-						ImageIO.read(ClassLoader
-								.getSystemResource(ApplProperties.get()
-										.getString("password.image")))));
+				passwordLabel = new JLabel(new ImageIcon(ImageIO.read(ClassLoader.getSystemResource(ApplProperties.get().getString("password.image")))));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -182,32 +175,23 @@ public class OpenTransactions extends Interpreter {
 			passwordImage.setModal(false);
 			passwordImage.setAlwaysOnTop(true);
 			try {
-				passwordImage.setIconImage(ImageIO.read(ClassLoader
-						.getSystemResource(ApplProperties.get().getString(
-								"icon.image"))));
+				passwordImage.setIconImage(ImageIO.read(ClassLoader.getSystemResource(ApplProperties.get().getString("icon.image"))));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-			passwordImage.setBounds(
-					ApplProperties.get().getInteger("password.image.insetW"),
-					ApplProperties.get().getInteger("password.image.insetH"),
-					screenSize.width
-							- ApplProperties.get().getInteger(
-									"password.image.insetW") * 2,
-					screenSize.height
-							- ApplProperties.get().getInteger(
-									"password.image.insetH") * 2);
+			passwordImage.setBounds(ApplProperties.get().getInteger("password.image.insetW"), ApplProperties.get().getInteger("password.image.insetH"), screenSize.width
+					- ApplProperties.get().getInteger("password.image.insetW") * 2, screenSize.height - ApplProperties.get().getInteger("password.image.insetH") * 2);
 			passwordImage.pack();
 			passwordImage.setVisible(true);
 		}
-		
+
 		System.out.println(Text.WELCOME_HEADER);
 		System.out.println();
 		reset();
 		super.run(console);
 	}
-	
+
 	public static void reset() {
 		Commands.reset();
 		MetaCommands.init();

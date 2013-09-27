@@ -8,9 +8,8 @@ import eu.opentxs.bridge.core.dto.ContactAccount;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class ContactModule extends Module {
-	
-	public static void createContact(String nymId, String name)
-			throws Exception {
+
+	public static void createContact(String nymId, String name) throws Exception {
 		Contact contact = Contact.add(nymId, name);
 		if (contact == null)
 			error("Contact already exists");
@@ -28,19 +27,18 @@ public class ContactModule extends Module {
 		success("Contact is deleted");
 	}
 
-	public static void updateContact(String nymId, String name)
-			throws Exception {
+	public static void updateContact(String nymId, String name) throws Exception {
 		Contact contact = Contact.update(nymId, name);
 		if (contact == null)
 			error("Contact does not exist");
 		showContact(contact);
 		success("Contact successfully updated");
 	}
-	
+
 	public static boolean verifyContact(String nymId) throws Exception {
 		return (Contact.get(nymId) != null);
 	}
-	
+
 	public static boolean verifyContactAccount(String accountId) throws Exception {
 		return (ContactAccount.get(accountId) != null);
 	}
@@ -70,12 +68,9 @@ public class ContactModule extends Module {
 		for (ContactAccount contactAccount : contactAccounts) {
 			String assetId = contactAccount.getAssetId();
 			String serverId = contactAccount.getServerId();
-			print(String.format("%12s: %s", "Account",
-					contactAccount.getAccountId()));
-			print(String.format("%12s: %s (%s)", "Asset", assetId,
-					getAssetName(assetId)));
-			print(String.format("%12s: %s (%s)", "Server", serverId,
-					getServerName(serverId)));
+			print(String.format("%12s: %s", "Account", contactAccount.getAccountId()));
+			print(String.format("%12s: %s (%s)", "Asset", assetId, getAssetName(assetId)));
+			print(String.format("%12s: %s (%s)", "Server", serverId, getServerName(serverId)));
 			print(Util.repeat("-", 13));
 		}
 	}
@@ -91,14 +86,12 @@ public class ContactModule extends Module {
 			showContact(contact);
 	}
 
-	public static void createContactAccount(String accountId, String assetId,
-			String nymId, String serverId) throws Exception {
+	public static void createContactAccount(String accountId, String assetId, String nymId, String serverId) throws Exception {
 		if (!Util.isValidString(nymId))
 			error("hisNymId is undefined");
 		Contact contact = getContact(nymId);
 		assetId = parseAssetId(assetId);
-		ContactAccount contactAccount = ContactAccount.add(accountId, assetId,
-				nymId, serverId);
+		ContactAccount contactAccount = ContactAccount.add(accountId, assetId, nymId, serverId);
 		if (contactAccount == null)
 			error("Contact account already exists");
 		showContact(contact);
@@ -114,27 +107,24 @@ public class ContactModule extends Module {
 		success("Contact account is deleted");
 	}
 
-	public static ContactAccount getContactAccount(String accountId)
-			throws Exception {
+	public static ContactAccount getContactAccount(String accountId) throws Exception {
 		ContactAccount contactAccount = ContactAccount.get(accountId);
 		if (contactAccount == null)
 			error("Contact account does not exist");
 		return contactAccount;
 	}
-	
+
 	public static String getContactName(String nymId) {
 		Contact contact = Contact.get(nymId);
 		if (contact != null)
 			return contact.getName();
 		return getNymName(nymId);
 	}
-	
+
 	public static String getContactAccountName(ContactAccount contactAccount) {
-		return String.format("%s's %s", 
-				Contact.get(contactAccount.getNymId()).getName(), 
-				getAssetName(contactAccount.getAssetId()));
+		return String.format("%s's %s", Contact.get(contactAccount.getNymId()).getName(), getAssetName(contactAccount.getAssetId()));
 	}
-	
+
 	public static String getContactAccountName(String accountId) {
 		ContactAccount contactAccount = ContactAccount.get(accountId);
 		if (contactAccount != null)

@@ -19,7 +19,7 @@ public class ContactCommands extends Commands {
 		addToCommands(new DeleteContactAccount(), Category.CONTACT, Sophistication.MINI);
 		addToCommands(new ShowContacts(), Category.CONTACT, Sophistication.MINI);
 	}
-	
+
 	public static class ShowContacts extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -29,7 +29,7 @@ public class ContactCommands extends Commands {
 			ContactModule.showContacts();
 		}
 	}
-	
+
 	public static class CreateContact extends Command {
 		@Override
 		protected void action(String[] args) throws Exception {
@@ -41,7 +41,7 @@ public class ContactCommands extends Commands {
 			ContactModule.createContact(nymId, name);
 		}
 	}
-	
+
 	public static class DeleteContact extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -86,7 +86,7 @@ public class ContactCommands extends Commands {
 				ContactModule.deleteContact(nymId);
 		}
 	}
-	
+
 	public static class EditContact extends Command {
 		private List<Contact> contacts;
 		@Override
@@ -133,7 +133,7 @@ public class ContactCommands extends Commands {
 			ContactModule.updateContact(nymId, name);
 		}
 	}
-	
+
 	public static class CreateContactAccount extends Command {
 		private List<Contact> contacts;
 		private List<String> serverIds;
@@ -213,7 +213,7 @@ public class ContactCommands extends Commands {
 			ContactModule.createContactAccount(accountId, assetId, nymId, serverId);
 		}
 	}
-	
+
 	public static class DeleteContactAccount extends Command {
 		private List<ContactAccount> contactAccounts;
 		@Override
