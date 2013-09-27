@@ -128,10 +128,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.downloadFiles();
 		}
 	}
@@ -144,10 +144,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.processInbox();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
 		}
@@ -161,10 +161,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.processIncome();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
 		}
@@ -178,10 +178,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.verifyLastReceipt();
 		}
 	}
@@ -194,10 +194,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.showInbox();
 		}
 	}
@@ -210,10 +210,10 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.showOutbox();
 		}
 	}
@@ -394,7 +394,7 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId()).hack1();
+			AccountModule.getInstance(DataModel.getMyAccountId()).hack1();
 		}
 	}
 
@@ -406,7 +406,7 @@ public class HackCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId()).hack2();
+			AccountModule.getInstance(DataModel.getMyAccountId()).hack2();
 		}
 	}
 

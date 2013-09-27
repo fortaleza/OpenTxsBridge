@@ -159,7 +159,7 @@ public class AccountCommands extends Commands {
 			execute(accountId);
 		}
 		/**
-		 * Delete account and remove it from the server (fails if it's still used)
+		 * Delete an account and remove it from the server (fails if it's still used)
 		 * 
 		 * @param accountId
 		 * @throws Exception
@@ -176,16 +176,22 @@ public class AccountCommands extends Commands {
 
 	public static class ShowAccount extends Command {
 		@Override
+		public void sanity() throws Exception {
+			if (!Util.isValidString(DataModel.getMyAccountId()))
+				error("You need to set your account first");
+		}
+		@Override
 		protected void action(String[] args) throws Exception {
-			execute();
+			execute(DataModel.getMyAccountId());
 		}
 		/**
-		 * Show my account
+		 * Show an account and its balance
 		 * 
+		 * @param accountId
 		 * @throws Exception
 		 */
-		public static void execute() throws Exception {
-			Module.showMe();
+		public static void execute(String accountId) throws Exception {
+			Module.showLedger(accountId);
 		}
 	}
 
@@ -197,17 +203,18 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
+			execute(DataModel.getMyAccountId());
 		}
 		/**
-		 * Show the purse for given server, nym and asset
+		 * Show a purse for an account
 		 * 
-		 * @param serverId
-		 * @param nymId
-		 * @param assetId
+		 * @param accountId
 		 * @throws Exception
 		 */
-		public static void execute(String serverId, String nymId, String assetId) throws Exception {
+		public static void execute(String accountId) throws Exception {
+			String serverId = Module.getAccountServerId(accountId);
+			String nymId = Module.getAccountNymId(accountId);
+			String assetId = Module.getAccountAssetId(accountId);
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			String purse = assetModule.loadPurse();
 			if (!Util.isValidString(purse)) {
@@ -226,10 +233,16 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		/**
+		 * Show transactions for an account
+		 * 
+		 * @param accountId
+		 * @throws Exception
+		 */
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.showTransactions();
 		}
 	}
@@ -243,7 +256,7 @@ public class AccountCommands extends Commands {
 		public void sanity() throws Exception {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
-			AccountModule accountModule = new AccountModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			AccountModule accountModule = AccountModule.getInstance(DataModel.getMyAccountId());
 			transactions = accountModule.getTransactionsUnrealized();
 			if (transactions.size() == 0)
 				error("There are no unrealized transactions");
@@ -286,27 +299,37 @@ public class AccountCommands extends Commands {
 					action = Action.DISCARD;
 			}
 			if (action != null) {
-				execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId(), transaction, action);
+				execute(DataModel.getMyAccountId(), transaction, action);
 			}
 		}
-		public static void execute(String serverId, String nymId, String accountId, Transaction transaction, Action action) throws Exception {
+		/**
+		 * Manage unrealized transaction
+		 * 
+		 * @param accountId
+		 * @param transaction
+		 * @param action
+		 * @throws Exception
+		 */
+		public static void execute(String accountId, Transaction transaction, Action action) throws Exception {
+			String serverId = Module.getAccountServerId(accountId);
+			String nymId = Module.getAccountNymId(accountId);
 			InstrumentType instrumentType = transaction.getInstrumentType();
 			if (instrumentType.equals(InstrumentType.INVOICE)) {
 				String invoice = transaction.getInstrument();
 				if (action.equals(Action.EXECUTE))
-					ExecuteInvoice.execute(serverId, nymId, accountId, invoice);
+					ExecuteInvoice.execute(accountId, invoice);
 				else if (action.equals(Action.DISCARD))
 					DiscardInvoice.execute(serverId, nymId, invoice);
 				else if (action.equals(Action.CANCEL))
-					CancelInvoice.execute(serverId, nymId, accountId, invoice);
+					CancelInvoice.execute(accountId, invoice);
 			} else if (instrumentType.equals(InstrumentType.CHEQUE)) {
 				String cheque = transaction.getInstrument();
 				if (action.equals(Action.EXECUTE))
-					ExcecuteCheque.execute(serverId, nymId, accountId, cheque);
+					ExcecuteCheque.execute(accountId, cheque);
 				else if (action.equals(Action.DISCARD))
 					DiscardCheque.execute(serverId, nymId, cheque);
 				else if (action.equals(Action.CANCEL))
-					CancelCheque.execute(serverId, nymId, accountId, cheque);
+					CancelCheque.execute(accountId, cheque);
 			}
 		}
 	}
@@ -319,12 +342,18 @@ public class AccountCommands extends Commands {
 		}
 		@Override
 		protected void action(String[] args) throws Exception {
-			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAccountId());
+			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String serverId, String nymId, String accountId) throws Exception {
-			AccountModule accountModule = new AccountModule(serverId, nymId, accountId);
+		/**
+		 * Download all files and accept all updates
+		 * 
+		 * @param accountId
+		 * @throws Exception
+		 */
+		public static void execute(String accountId) throws Exception {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.refresh();
-			Module.showMe();
+			ShowAccount.execute(accountId);
 		}
 	}
 

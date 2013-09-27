@@ -125,7 +125,8 @@ public class Console extends JTextPane {
 	private Style styleErr;
 	private String styleInName = "in";
 	/**
-	 * After sending a line into stdIn stream, the flag is set FALSE blocking the keyboard. The flag is be reset if the ESCAPE sign arrives into the stdErr stream.
+	 * After sending a line into stdIn stream, the flag is set FALSE blocking the keyboard. The flag is be reset if the ESCAPE sign arrives into the
+	 * stdErr stream.
 	 */
 	private boolean isKbdOpen = false;
 	private boolean isEscaped = false;

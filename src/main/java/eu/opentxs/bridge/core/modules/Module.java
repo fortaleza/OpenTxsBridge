@@ -212,10 +212,6 @@ public abstract class Module {
 		print(Util.repeat("-", 13));
 	}
 
-	public static void showMe() throws Exception {
-		showLedger(DataModel.getMyAccountId());
-	}
-
 	public static void createWallet(String walletId) throws Exception {
 		InputStream is = ClassLoader.getSystemResource(ApplProperties.get().getString("wallet.xml")).openStream();
 		Scanner s = new Scanner(is);

@@ -208,7 +208,9 @@ public class AssetModule extends NymModule {
 			UTC validFrom = UTC.getDateUTC(OTAPI.Token.getValidFrom(serverId, assetId, token));
 			UTC validTo = UTC.getDateUTC(OTAPI.Token.getValidTo(serverId, assetId, token));
 			String status = (validTo.isAfter(getTime()) ? "valid" : "expired");
-			print(String.format("%5d: %4s | %2d | %s | %s | %s", ++i, denomination, series, UTC.dateToString(validFrom), UTC.dateToString(validTo), status));
+			print(String.format("%5d: %4s | %2d | %s | %s | %s",
+					++i, denomination, series,
+					UTC.dateToString(validFrom), UTC.dateToString(validTo), status));
 		}
 		print(String.format("%s: %4s", "Total", balance));
 		print(Util.repeat("-", 13));

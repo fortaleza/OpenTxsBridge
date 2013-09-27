@@ -13,8 +13,8 @@ import eu.opentxs.bridge.core.modules.act.ContactModule;
 public class Transaction implements Comparable<Transaction> {
 
 	public enum TransactionType {
-		PENDING("pending"), REPLY_NOTICE("replyNotice"), INSTRUMENT_NOTICE("instrumentNotice"), TRANSFER_RECEIPT("transferReceipt"), VOUCHER_RECEIPT("voucherReceipt"), CHEQUE_RECEIPT("chequeReceipt"), INVOICE_RECEIPT(
-				"invoiceReceipt");
+		PENDING("pending"), REPLY_NOTICE("replyNotice"), INSTRUMENT_NOTICE("instrumentNotice"), TRANSFER_RECEIPT("transferReceipt"), 
+		VOUCHER_RECEIPT("voucherReceipt"), CHEQUE_RECEIPT("chequeReceipt"), INVOICE_RECEIPT("invoiceReceipt");
 		private String value;
 		private TransactionType(String value) {
 			this.value = value;
@@ -93,8 +93,9 @@ public class Transaction implements Comparable<Transaction> {
 		}
 	}
 
-	private Transaction(String refNum, String dateSigned, String senderNymId, String senderAccountId, String recipientNymId, String recipientAccountId, String hisNymId, String trxnNum,
-			String instrument, InstrumentType instrumentType, TransactionType trxnType, Side side, Status status, Double volume, String note, String validFrom, String validTo) {
+	private Transaction(String refNum, String dateSigned, String senderNymId, String senderAccountId, String recipientNymId,
+			String recipientAccountId, String hisNymId, String trxnNum, String instrument, InstrumentType instrumentType, TransactionType trxnType,
+			Side side, Status status, Double volume, String note, String validFrom, String validTo) {
 		super();
 		this.refNum = refNum;
 		this.dateSigned = dateSigned;
@@ -157,7 +158,8 @@ public class Transaction implements Comparable<Transaction> {
 		return side;
 	}
 
-	public static List<Transaction> getListOfOutpayments(String serverId, String nymId, String assetId, int size, InstrumentType[] instrumentTypes) throws Exception {
+	public static List<Transaction> getListOfOutpayments(String serverId, String nymId, String assetId, int size, InstrumentType[] instrumentTypes)
+			throws Exception {
 		List<Transaction> list = new ArrayList<Transaction>();
 		for (int index = 0; index < size; index++) {
 			if (!OTAPI.GetNym.outpaymentsServerIdByIndex(nymId, index).equals(serverId))
@@ -190,8 +192,8 @@ public class Transaction implements Comparable<Transaction> {
 			String validFrom = OTAPI.Instrument.getValidFrom(instrument);
 			String validTo = OTAPI.Instrument.getValidTo(instrument);
 
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum, instrument, instrumentType, trxnType, side, status,
-					volume, note, validFrom, validTo));
+			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
 		}
 		return list;
 	}
@@ -232,8 +234,8 @@ public class Transaction implements Comparable<Transaction> {
 			String validFrom = OTAPI.Instrument.getValidFrom(instrument);
 			String validTo = OTAPI.Instrument.getValidTo(instrument);
 
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum, instrument, instrumentType, trxnType, side, status,
-					volume, note, validFrom, validTo));
+			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
 		}
 		return list;
 	}
@@ -294,8 +296,8 @@ public class Transaction implements Comparable<Transaction> {
 			String validFrom = null;
 			String validTo = null;
 
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum, instrument, instrumentType, trxnType, side, status,
-					volume, note, validFrom, validTo));
+			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
 		}
 		return list;
 	}
@@ -339,8 +341,8 @@ public class Transaction implements Comparable<Transaction> {
 			String validFrom = null;
 			String validTo = null;
 
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum, instrument, instrumentType, trxnType, side, status,
-					volume, note, validFrom, validTo));
+			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
 		}
 		return list;
 	}
@@ -353,7 +355,8 @@ public class Transaction implements Comparable<Transaction> {
 					// %5s | %5s |
 					// transaction.refNum, transaction.trxnNum,
 					UTC.timeToString(transaction.dateSigned), transaction.instrumentType, transaction.side, transaction.volume, transaction.status,
-					Util.crop(ContactModule.getContactName(transaction.hisNymId), 15), (Util.isValidString(transaction.note) ? String.format(": %s", transaction.note) : "")));
+					Util.crop(ContactModule.getContactName(transaction.hisNymId), 15),
+					(Util.isValidString(transaction.note) ? String.format(": %s", transaction.note) : "")));
 		}
 	}
 
@@ -361,8 +364,9 @@ public class Transaction implements Comparable<Transaction> {
 		Collections.sort(list);
 		int i = 0;
 		for (Transaction transaction : list) {
-			Module.print(String.format("%3d: %18s | %-8s | %-8s | %9.2f | %2s | %s", ++i, UTC.timeToString(transaction.dateSigned), transaction.instrumentType, transaction.side, transaction.volume,
-					transaction.status, Util.crop(ContactModule.getContactName(transaction.hisNymId), 15)));
+			Module.print(String.format("%3d: %18s | %-8s | %-8s | %9.2f | %2s | %s", ++i, UTC.timeToString(transaction.dateSigned),
+					transaction.instrumentType, transaction.side, transaction.volume, transaction.status,
+					Util.crop(ContactModule.getContactName(transaction.hisNymId), 15)));
 		}
 	}
 

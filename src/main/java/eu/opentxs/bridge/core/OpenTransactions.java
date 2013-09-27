@@ -166,7 +166,8 @@ public class OpenTransactions extends Interpreter {
 		if (ApplProperties.get().getBoolean("password.image.show")) {
 			JLabel passwordLabel = null;
 			try {
-				passwordLabel = new JLabel(new ImageIcon(ImageIO.read(ClassLoader.getSystemResource(ApplProperties.get().getString("password.image")))));
+				passwordLabel = new JLabel(new ImageIcon(
+						ImageIO.read(ClassLoader.getSystemResource(ApplProperties.get().getString("password.image")))));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -180,8 +181,10 @@ public class OpenTransactions extends Interpreter {
 				throw new RuntimeException(e);
 			}
 			Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-			passwordImage.setBounds(ApplProperties.get().getInteger("password.image.insetW"), ApplProperties.get().getInteger("password.image.insetH"), screenSize.width
-					- ApplProperties.get().getInteger("password.image.insetW") * 2, screenSize.height - ApplProperties.get().getInteger("password.image.insetH") * 2);
+			passwordImage.setBounds(ApplProperties.get().getInteger("password.image.insetW"),
+					ApplProperties.get().getInteger("password.image.insetH"),
+					screenSize.width - ApplProperties.get().getInteger("password.image.insetW") * 2,
+					screenSize.height - ApplProperties.get().getInteger("password.image.insetH") * 2);
 			passwordImage.pack();
 			passwordImage.setVisible(true);
 		}

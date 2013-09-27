@@ -29,8 +29,9 @@ public class ConsoleFrame extends JFrame {
 		console = new Console();
 		console.setForeground(new Color(ApplProperties.get().getInteger("console.color.in")));
 		console.setBackground(new Color(ApplProperties.get().getInteger("console.background")));
-		console.setFont(new Font(ApplProperties.get().getString("console.font.name"), (ApplProperties.get().getBoolean("console.font.bold") ? Font.BOLD : Font.PLAIN), ApplProperties.get().getInteger(
-				"console.font.size")));
+		console.setFont(new Font(ApplProperties.get().getString("console.font.name"), 
+				(ApplProperties.get().getBoolean("console.font.bold") ? Font.BOLD : Font.PLAIN),
+				ApplProperties.get().getInteger("console.font.size")));
 		console.setOutColor(new Color(ApplProperties.get().getInteger("console.color.out")));
 		console.setErrColor(new Color(ApplProperties.get().getInteger("console.color.err")));
 
@@ -44,9 +45,12 @@ public class ConsoleFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		setBounds(ApplProperties.get().getInteger("console.inset.horizontal"), ApplProperties.get().getInteger("console.inset.vertical"),
-				screenSize.width - ApplProperties.get().getInteger("console.inset.horizontal") * 2, screenSize.height - ApplProperties.get().getInteger("console.inset.vertical") * 2);
-		setSize(ApplProperties.get().getInteger("console.width"), ApplProperties.get().getInteger("console.height"));
+		setBounds(ApplProperties.get().getInteger("console.inset.horizontal"), 
+				ApplProperties.get().getInteger("console.inset.vertical"),
+				screenSize.width - ApplProperties.get().getInteger("console.inset.horizontal") * 2, 
+				screenSize.height - ApplProperties.get().getInteger("console.inset.vertical") * 2);
+		setSize(ApplProperties.get().getInteger("console.width"), 
+				ApplProperties.get().getInteger("console.height"));
 
 		setVisible(true);
 

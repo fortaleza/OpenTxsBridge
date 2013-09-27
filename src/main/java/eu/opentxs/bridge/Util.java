@@ -24,7 +24,8 @@ public class Util {
 	}
 
 	public static String getUserDataPath() {
-		return String.format("%s/%s/%s", System.getenv("APPDATA"), ApplProperties.get().getString("folder.app"), ApplProperties.get().getString("folder.client"));
+		return String.format("%s/%s/%s", System.getenv("APPDATA"), ApplProperties.get().getString("folder.app"),
+				ApplProperties.get().getString("folder.client"));
 	}
 
 	public static String repeat(String s, int times) {

@@ -184,7 +184,7 @@ public class ConfigCommands extends Commands {
 		}
 		public static void execute(String accountId) throws Exception {
 			Module.setMyAccountId(accountId);
-			Module.showMe();
+			Module.showLedger(accountId);
 		}
 	}
 

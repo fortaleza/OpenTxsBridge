@@ -14,9 +14,15 @@ public class AccountModule extends NymModule {
 
 	protected String accountId;
 
-	public AccountModule(String serverId, String nymId, String accountId) throws Exception {
+	private AccountModule(String serverId, String nymId, String accountId) throws Exception {
 		super(serverId, nymId);
 		this.accountId = parseAccountId(accountId);
+	}
+	
+	public static AccountModule getInstance(String accountId) throws Exception {
+		String serverId = getAccountServerId(accountId);
+		String nymId = getAccountNymId(accountId);
+		return new AccountModule(serverId, nymId, accountId);
 	}
 
 	public static String accountAlreadyExists(String serverId, String nymId, String assetId) {
@@ -25,7 +31,9 @@ public class AccountModule extends NymModule {
 			AccountType accountType = AccountType.parse(getAccountType(accountId));
 			if (accountType.equals(AccountType.ISSUER))
 				continue;
-			if (getAccountServerId(accountId).equals(serverId) && getAccountNymId(accountId).equals(nymId) && getAccountAssetId(accountId).equals(assetId))
+			if (getAccountServerId(accountId).equals(serverId) 
+					&& getAccountNymId(accountId).equals(nymId)
+					&& getAccountAssetId(accountId).equals(assetId))
 				return accountId;
 		}
 		return null;
@@ -139,7 +147,9 @@ public class AccountModule extends NymModule {
 		{
 			int size = OTAPI.GetNym.outpaymentsCount(nymId);
 			if (size > 0) {
-				list.addAll(Transaction.getListOfOutpayments(serverId, nymId, getAccountAssetId(accountId), size, new InstrumentType[]{InstrumentType.CHEQUE, InstrumentType.INVOICE}));
+				list.addAll(Transaction.getListOfOutpayments(
+						serverId, nymId, getAccountAssetId(accountId), size,
+						new InstrumentType[]{InstrumentType.CHEQUE, InstrumentType.INVOICE}));
 			} else if (size < 0) {
 				warn("Outpayments size is abnormal", size);
 			}
@@ -185,7 +195,9 @@ public class AccountModule extends NymModule {
 		{
 			int size = OTAPI.GetNym.outpaymentsCount(nymId);
 			if (size > 0) {
-				list.addAll(Transaction.getListOfOutpayments(serverId, nymId, getAccountAssetId(accountId), size, new InstrumentType[]{InstrumentType.CASH, InstrumentType.VOUCHER}));
+				list.addAll(Transaction.getListOfOutpayments(
+						serverId, nymId, getAccountAssetId(accountId), size,
+						new InstrumentType[]{InstrumentType.CASH, InstrumentType.VOUCHER}));
 			} else if (size < 0) {
 				warn("Outpayments size is abnormal", size);
 			}
@@ -305,7 +317,8 @@ public class AccountModule extends NymModule {
 	}
 
 	public void verifyLastReceipt() throws Exception {
-		if (!OTAPI.exists("receipts", serverId, String.format("%s.%s", nymId, "success")) && !OTAPI.exists("receipts", serverId, String.format("%s.%s", accountId, "success"))) {
+		if (!OTAPI.exists("receipts", serverId, String.format("%s.%s", nymId, "success"))
+				&& !OTAPI.exists("receipts", serverId, String.format("%s.%s", accountId, "success"))) {
 			print("There is no receipt for this account");
 			return;
 		}

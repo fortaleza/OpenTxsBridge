@@ -35,8 +35,8 @@ public abstract class Commands {
 	}
 
 	public enum Category {
-		META("META"), CONFIG("CONFIG"), WALLET("WALLET"), SERVER("SERVER"), NYM("NYM"), ASSET("ASSET"), ACCOUNT("ACCOUNT"), CONTACT("CONTACT"), BUSINESS("BUSINESS"), BUSINESS_EXTRA("BUSINESS EXTRA"), HACK(
-				"HACK"), TEST("TEST");
+		META("META"), CONFIG("CONFIG"), WALLET("WALLET"), SERVER("SERVER"), NYM("NYM"), ASSET("ASSET"), ACCOUNT("ACCOUNT"), CONTACT("CONTACT"), BUSINESS(
+				"BUSINESS"), BUSINESS_EXTRA("BUSINESS EXTRA"), HACK("HACK"), TEST("TEST");
 		private String label;
 		private Category(String label) {
 			this.label = label;
@@ -191,7 +191,8 @@ public abstract class Commands {
 			if (path == null)
 				return null;
 			if (!path.toFile().exists()) {
-				JOptionPane.showMessageDialog(null, Text.FILE_DOES_NOT_EXIST.toString(), Text.FILE_DOES_NOT_EXIST_TITLE.toString(), JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, Text.FILE_DOES_NOT_EXIST.toString(), 
+						Text.FILE_DOES_NOT_EXIST_TITLE.toString(), JOptionPane.ERROR_MESSAGE);
 				path = null;
 			}
 		}
@@ -209,8 +210,8 @@ public abstract class Commands {
 			if (path == null)
 				return false;
 			if (path.toFile().exists()) {
-				int choice = JOptionPane.showOptionDialog(null, Text.FILE_OVERWRITE.toString(), Text.FILE_OVERWRITE_TITLE.toString(), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-						null, null);
+				int choice = JOptionPane.showOptionDialog(null, Text.FILE_OVERWRITE.toString(), Text.FILE_OVERWRITE_TITLE.toString(),
+						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
 				if (choice != JOptionPane.YES_OPTION)
 					path = null;
 			}
