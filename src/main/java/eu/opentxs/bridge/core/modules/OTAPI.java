@@ -453,9 +453,6 @@ public class OTAPI {
 		return otapiJNI.OTAPI_Basic_AddServerContract(contract);
 	}
 	
-
-	
-
 	public static int pingServer(String serverId, String nymId) {
 		return otapiJNI.OTAPI_Basic_checkServerID(serverId, nymId);
 	}
@@ -465,9 +462,6 @@ public class OTAPI {
 		return otapiJNI.OTAPI_Basic_ResyncNymWithServer(serverId, nymId, message);
 	}
 
-	/**
-	 * NYM
-	 */
 	public static String createNym(int keySize, String nymIdSource, String altLocation) {
 		return otapiJNI.OTAPI_Basic_CreateNym(keySize, nymIdSource, altLocation);
 	}
@@ -482,38 +476,24 @@ public class OTAPI {
 		return otapiJNI.OTAPI_Basic_deleteUserAccount(serverId, nymId);
 	}
 
-	/**
-	 * ASSET
-	 */
 	public static String createAsset(String nymId, String definition) {
 		return otapiJNI.OTAPI_Basic_CreateAssetContract(nymId, definition);
 	}
-
 
 	public static int issueAsset(String serverId, String nymId, String contract) {
 		return otapiJNI.OTAPI_Basic_issueAssetType(serverId, nymId, contract);
 	}
 	
-
 	// why is it not returning assetId?
 	public static int addAsset(String contract) {
 		return otapiJNI.OTAPI_Basic_AddAssetContract(contract);
 	}
-
-	
 
 	// decoding does not work on server side
 	public static int queryAssetTypes(String serverId, String nymId, String encodedMap) {
 		return otapiJNI.OTAPI_Basic_queryAssetTypes(serverId, nymId, encodedMap);
 	}
 
-	
-
-	
-
-	/**
-	 * ACCOUNT
-	 */
 	// why is it not returning accountId?
 	public static int createAccount(String serverId, String nymId, String assetId) {
 		return otapiJNI.OTAPI_Basic_createAssetAccount(serverId, nymId, assetId);
@@ -528,10 +508,6 @@ public class OTAPI {
 	public static int synchronizeAccount(String serverId, String nymId, String accountId) {
 		return otapiJNI.OTAPI_Basic_getAccount(serverId, nymId, accountId);
 	}
-
-	
-
-	
 
 	public static int getInbox(String serverId, String nymId, String accountId) {
 		return otapiJNI.OTAPI_Basic_getInbox(serverId, nymId, accountId);
@@ -569,8 +545,6 @@ public class OTAPI {
 		return otapiJNI.OTAPI_Basic_VerifySignature(nymId, contract);
 	}
 
-	
-
 	public static boolean haveAlreadySeenReply(String serverId, String nymId, String requestId) {
 		return otapiJNI.OTAPI_Basic_HaveAlreadySeenReply(serverId, nymId, requestId);
 	}
@@ -580,7 +554,6 @@ public class OTAPI {
 	public static int getBoxReceipt(String serverId, String nymId, String accountId, Box box, String transactionId) {
 		return otapiJNI.OTAPI_Basic_getBoxReceipt(serverId, nymId, accountId, box.getIndex(), transactionId);
 	}
-
 	
 	public static int getTransactionNumbers(String serverId, String nymId) {
 		return otapiJNI.OTAPI_Basic_getTransactionNumber(serverId, nymId);
@@ -624,7 +597,6 @@ public class OTAPI {
 		return otapiJNI.OTAPI_Basic_SavePurse(serverId, assetId, nymId, purse);
 	}
 	
-
 	public static int notarizeTransfer(String serverId, String nymId, String accountId, String amount, String hisAccountId, String note) {
 		return otapiJNI.OTAPI_Basic_notarizeTransfer(serverId, nymId, accountId, hisAccountId, amount, note);
 	}
@@ -685,6 +657,5 @@ public class OTAPI {
 	public static boolean exists(String folder, String first, String second) {
 		return otapiJNI.Exists__SWIG_1(folder, first, second);
 	}
-
 
 }
