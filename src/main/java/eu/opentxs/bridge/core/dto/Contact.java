@@ -67,7 +67,7 @@ public class Contact implements Serializable {
 	public static Contact add(String nymId, String name) {
 		Contact contact = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = getDatabase().beginTransaction();
 			contact = (Contact) sess.get(Contact.class, nymId);
 			if (contact != null) {
@@ -79,7 +79,7 @@ public class Contact implements Serializable {
 				sess.save(contact);
 			}
 		} catch (Exception e) {
-			System.err.println(e);
+			e.printStackTrace();
 		} finally {
 			getDatabase().commitClose(sess);
 		}
@@ -89,7 +89,7 @@ public class Contact implements Serializable {
 	public static Contact update(String nymId, String name) {
 		Session sess = null;
 		Contact contact = null;
-		try {
+		try {//fatal
 			sess = getDatabase().beginTransaction();
 			contact = (Contact) sess.get(Contact.class, nymId);
 			if (contact != null) {
@@ -97,7 +97,7 @@ public class Contact implements Serializable {
 				sess.update(contact);
 			}
 		} catch (Exception e) {
-			System.err.println(e);
+			e.printStackTrace();
 		} finally {
 			getDatabase().commitClose(sess);
 		}
@@ -107,13 +107,13 @@ public class Contact implements Serializable {
 	public static Contact delete(String nymId) {
 		Session sess = null;
 		Contact contact = null;
-		try {
+		try {//fatal
 			sess = getDatabase().beginTransaction();
 			contact = (Contact) sess.get(Contact.class, nymId);
 			if (contact != null)
 				sess.delete(contact);
 		} catch (Exception e) {
-			System.err.println(e);
+			e.printStackTrace();
 		} finally {
 			getDatabase().commitClose(sess);
 		}
@@ -123,11 +123,11 @@ public class Contact implements Serializable {
 	public static Contact get(String nymId) {
 		Contact contact = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = getDatabase().beginTransaction();
 			contact = (Contact) sess.get(Contact.class, nymId);
 		} catch (Exception e) {
-			System.err.println(e);
+			e.printStackTrace();
 		} finally {
 			getDatabase().commitClose(sess);
 		}
@@ -138,11 +138,11 @@ public class Contact implements Serializable {
 	public static List<Contact> getList() {
 		List<Contact> contacts = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = getDatabase().beginTransaction();
 			contacts = sess.createCriteria(Contact.class).list();
 		} catch (Exception e) {
-			System.err.println(e);
+			e.printStackTrace();
 		} finally {
 			getDatabase().commitClose(sess);
 		}

@@ -10,18 +10,19 @@ import org.opentransactions.otapi.StringMap;
 import eu.opentxs.bridge.UTC;
 import eu.opentxs.bridge.Util;
 import eu.opentxs.bridge.core.dto.Transaction;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.OTAPI;
 
 public class AssetModule extends NymModule {
 
 	protected String assetId;
 
-	public AssetModule(String serverId, String nymId, String assetId) throws Exception {
+	public AssetModule(String serverId, String nymId, String assetId) throws OTException {
 		super(serverId, nymId);
 		this.assetId = parseAssetId(assetId);
 	}
 
-	public static String createAsset(String nymId, String definition) throws Exception {
+	public static String createAsset(String nymId, String definition) throws OTException {
 		attempt("Creating new asset");
 		nymId = parseNymId(nymId);
 
@@ -37,7 +38,7 @@ public class AssetModule extends NymModule {
 		return assetId;
 	}
 
-	public static String addAsset(String contract) throws Exception {
+	public static String addAsset(String contract) throws OTException {
 		attempt("Adding asset");
 		// /how to check if asset is already in the wallet??
 		List<String> before = getAssetIds();
@@ -62,16 +63,16 @@ public class AssetModule extends NymModule {
 		return assetId;
 	}
 
-	public static void renameAsset(String assetId, String assettName) throws Exception {
+	public static void renameAsset(String assetId, String assettName) throws OTException {
 		attempt("Renaming asset");
 		assetId = parseAssetId(assetId);
-		if (!OTAPI.setAssetName(assetId, assettName))
+		if (!OTAPI.SetAsset.name(assetId, assettName))
 			error("Failed to rename");
 		showAsset(assetId);
 		success("Asset is renamed");
 	}
 
-	public void queryAsset() throws Exception {
+	public void queryAsset() throws OTException {
 		attempt("Querying asset");
 
 		Storable storable1 = OTAPI.createObject(StoredObjectType.STORED_OBJ_STRING_MAP);
@@ -120,39 +121,39 @@ public class AssetModule extends NymModule {
 		print(confirmedAssetIds);
 	}
 
-	public static String getAssetContract(String assetId) throws Exception {
-		return OTAPI.getAssetContract(assetId);
+	public static String getAssetContract(String assetId) throws OTException {
+		return OTAPI.GetAsset.contract(assetId);
 	}
 
-	public static String showAssetContract(String assetId) throws Exception {
+	public static String showAssetContract(String assetId) throws OTException {
 		assetId = parseAssetId(assetId);
 		String contract = getAssetContract(assetId);
 		publish(contract);
 		return contract;
 	}
 
-	public static void showAssetAccounts(String assetId) throws Exception {
+	public static void showAssetAccounts(String assetId) throws OTException {
 		assetId = parseAssetId(assetId);
 		print(String.format("%12s:", "ACCOUNTS"));
 		int accountCount = OTAPI.getAccountCount();
 		for (int index = 0; index < accountCount; index++) {
-			String accountId = OTAPI.getAccountId(index);
+			String accountId = OTAPI.GetAccount.id(index);
 			if (getAccountAssetId(accountId).equals(assetId))
 				showLedger(accountId);
 		}
 	}
 
-	public static void deleteAsset(String assetId) throws Exception {
+	public static void deleteAsset(String assetId) throws OTException {
 		attempt("Deleting asset");
 		assetId = parseAssetId(assetId);
-		if (!OTAPI.canDeleteAsset(assetId))
+		if (!OTAPI.Wallet.canDeleteAsset(assetId))
 			error("Asset cannot be deleted");
-		if (!OTAPI.deleteAsset(assetId))
+		if (!OTAPI.Wallet.deleteAsset(assetId))
 			error("Failed to delete asset");
 		success("Asset is deleted");
 	}
 
-	public String createAccount(String accountName) throws Exception {
+	public String createAccount(String accountName) throws OTException {
 		attempt("Creating account");
 		if (!isNymRegisteredAtServer(serverId, nymId))
 			error("Nym is not registered at the server");
@@ -162,7 +163,7 @@ public class AssetModule extends NymModule {
 				return OTAPI.createAccount(serverId, nymId, assetId);
 			}
 		});
-		String accountId = OTAPI.getNewAccountId(message);
+		String accountId = OTAPI.Message.getNewAccountId(message);
 		if (!Util.isValidString(accountId))
 			error("Account created but failed to retreive its id");
 		if (!Util.isValidString(accountName))
@@ -172,7 +173,7 @@ public class AssetModule extends NymModule {
 		return accountId;
 	}
 
-	public String loadPurse() throws Exception {
+	public String loadPurse() throws OTException {
 		String purse = OTAPI.loadPurse(serverId, nymId, assetId);
 		if (!Util.isValidString(purse))
 			return null;
@@ -181,7 +182,7 @@ public class AssetModule extends NymModule {
 		return null;
 	}
 
-	public int getPurseSize(String purse) throws Exception {
+	public int getPurseSize(String purse) throws OTException {
 		attempt("Getting purse size");
 		int size = OTAPI.Purse.getSize(serverId, assetId, purse);
 		if (size < 0)
@@ -189,7 +190,7 @@ public class AssetModule extends NymModule {
 		return size;
 	}
 
-	public void showPurse(String purse) throws Exception {
+	public void showPurse(String purse) throws OTException {
 		attempt("Showing purse");
 		String balance = OTAPI.Purse.getBalance(serverId, assetId, purse);
 		int size = getPurseSize(purse);
@@ -216,7 +217,7 @@ public class AssetModule extends NymModule {
 		print(Util.repeat("-", 13));
 	}
 
-	public String exportPurseToCash(List<Integer> indices, String hisNymId) throws Exception {
+	public String exportPurseToCash(List<Integer> indices, String hisNymId) throws OTException {
 		attempt("Exporting purse to cash");
 		String purse = OTAPI.loadPurse(serverId, nymId, assetId);
 		if (!Util.isValidString(purse))
@@ -232,7 +233,7 @@ public class AssetModule extends NymModule {
 		return newPurse;
 	}
 
-	public static String getCashAssetId(String cash) throws Exception {
+	public static String getCashAssetId(String cash) throws OTException {
 		if (!Util.isValidString(cash))
 			error("cash is empty");
 		String assetId = OTAPI.Instrument.getAssetId(cash);
@@ -241,7 +242,7 @@ public class AssetModule extends NymModule {
 		return assetId;
 	}
 
-	public void verifyCash(String cash) throws Exception {
+	public void verifyCash(String cash) throws OTException {
 		if (!Util.isValidString(cash))
 			error("cash is empty");
 		String hisNymId = OTAPI.Instrument.getRecipientNymId(cash);
@@ -251,18 +252,18 @@ public class AssetModule extends NymModule {
 			error("Your account's asset type is incompatible with the payment");
 	}
 
-	public void importCashToPurse(String cash) throws Exception {
+	public void importCashToPurse(String cash) throws OTException {
 		attempt("Importing cash to purse");
 		if (!Util.isValidString(cash))
 			error("cash is empty");
-		if (!OTAPI.importPurse(serverId, nymId, assetId, cash))
+		if (!OTAPI.Wallet.importPurse(serverId, nymId, assetId, cash))
 			error("failed to import cash");
-		Double volume = getPurseBalanceValue(serverId, assetId, cash);
-		print(String.format("Imported volume: %.2f", volume));
+		Integer value = getPurseBalanceValue(serverId, assetId, cash);
+		info(String.format("Imported volume: %s", convertValueToFormat(assetId, value)));
 		success("Cash successfully imported to purse");
 	}
 
-	public String processPurse(String purse, List<Integer> indices, String hisNymId, boolean publishResult) throws Exception {
+	public String processPurse(String purse, List<Integer> indices, String hisNymId, boolean publishResult) throws OTException {
 		attempt("Processing purse");
 		if (!Util.isValidString(hisNymId))
 			error("hisNymId is empty");
@@ -273,7 +274,7 @@ public class AssetModule extends NymModule {
 		if (!Util.isValidString(oldPurse))
 			error("old purse failed to create");
 		int size = getPurseSize(purse);
-		double volume = 0;
+		Integer value = 0;
 		for (int index = 0; index < size; index++) {
 			String token = OTAPI.Purse.peek(serverId, nymId, assetId, purse);
 			if (!Util.isValidString(token))
@@ -282,7 +283,7 @@ public class AssetModule extends NymModule {
 			if (!Util.isValidString(purse))
 				error("purse after pop is empty");
 			if (indices == null || indices.size() == 0 || indices.contains(index)) {
-				volume += getTokenDenomination(token);
+				value += getTokenDenomination(token);
 				String exportedToken = OTAPI.Token.changeOwner(serverId, nymId, assetId, token, hisNymId);
 				if (!Util.isValidString(exportedToken))
 					error("exported token is empty");
@@ -299,12 +300,12 @@ public class AssetModule extends NymModule {
 			error("failed to save purse");
 		if (publishResult)
 			publish(newPurse);
-		print(String.format("Exported volume: %.2f", volume));
+		info(String.format("Exported volume: %s", convertValueToFormat(assetId, value)));
 		success("Purse is processed");
 		return newPurse;
 	}
 
-	public String processPurseWithPassphrase(String purse, List<Integer> indices) throws Exception {
+	public String processPurseWithPassphrase(String purse, List<Integer> indices) throws OTException {
 		attempt("Processing purse with passphrase");
 		// /this causes crash!!!
 		String newPurse = OTAPI.createPurseWithPassphrase(serverId, nymId, assetId);
@@ -314,7 +315,7 @@ public class AssetModule extends NymModule {
 		if (!Util.isValidString(oldPurse))
 			error("old purse failed to create");
 		int size = getPurseSize(purse);
-		double volume = 0;
+		Integer value = 0;
 		for (int index = 0; index < size; index++) {
 			String token = OTAPI.Purse.peek(serverId, nymId, assetId, purse);
 			if (!Util.isValidString(token))
@@ -323,7 +324,7 @@ public class AssetModule extends NymModule {
 			if (!Util.isValidString(purse))
 				error("purse after pop is empty");
 			if (indices == null || indices.size() == 0 || indices.contains(index)) {
-				volume += getTokenDenomination(token);
+				value += getTokenDenomination(token);
 				// String exportedToken = OTAPI.Token.changeOwner(serverId, nymId, assetId, token, hisNymId);
 				// if (!Util.isValidString(exportedToken))
 				// error("exported token is empty");
@@ -339,15 +340,16 @@ public class AssetModule extends NymModule {
 		if (!OTAPI.savePurse(serverId, nymId, assetId, oldPurse))
 			error("failed to save purse");
 		publish(newPurse);
-		print(String.format("Exported volume: %.2f", volume));
+		info(String.format("Exported volume: %s (%d)", 
+				convertValueToFormat(assetId, value), value));
 		success("Purse is split");
 		return newPurse;
 	}
 
-	public void showPayInbox() throws Exception {
+	public void showPayInbox() throws OTException {
 		String ledger = OTAPI.loadPayInbox(serverId, nymId);
 		if (!Util.isValidString(ledger)) {
-			print("PayInbox is empty");
+			log("PayInbox is empty");
 			return;
 		}
 		int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
@@ -355,23 +357,35 @@ public class AssetModule extends NymModule {
 			if (size < 0)
 				warn("PayInbox size is abnormal", size);
 			else
-				print("PayInbox size is zero");
+				log("PayInbox size is zero");
 			return;
 		}
-		List<Transaction> list = Transaction.getListForNym(serverId, nymId, assetId, ledger, size);
+		List<Transaction> list = new ArrayList<Transaction>();
+		for (int index = 0; index < size; index++) {
+			Transaction transaction = Transaction.getTransactionForNym(
+					serverId, nymId, assetId, ledger, index);
+			if (transaction != null)
+				list.add(transaction);
+		}
 		Transaction.showH(list);
 	}
 
-	public void showPayOutbox() throws Exception {
+	public void showPayOutbox() throws OTException {
 		int size = OTAPI.GetNym.outpaymentsCount(nymId);
 		if (size <= 0) {
 			if (size < 0)
 				warn("Outpayments size is abnormal", size);
 			else
-				print("Outpayments size is zero");
+				log("Outpayments size is zero");
 			return;
 		}
-		List<Transaction> list = Transaction.getListOfOutpayments(serverId, nymId, assetId, size, null);
+		List<Transaction> list = new ArrayList<Transaction>();
+		for (int index = 0; index < size; index++) {
+			Transaction transaction = Transaction.getTransactionForOutpayments(
+					serverId, nymId, assetId, index, null);
+			if (transaction != null)
+				list.add(transaction);
+		}
 		Transaction.showH(list);
 	}
 
@@ -379,8 +393,9 @@ public class AssetModule extends NymModule {
 	 * internal
 	 *********************************************************************/
 
-	private Double getTokenDenomination(String token) throws Exception {
-		return getDouble(OTAPI.Token.getDenomination(serverId, assetId, token));
+	private Integer getTokenDenomination(String token) throws OTException {
+		String amount = OTAPI.Token.getDenomination(serverId, assetId, token);
+		return convertAmountToValue(amount);
 	}
 
 }

@@ -8,6 +8,7 @@ import eu.opentxs.bridge.core.DataModel;
 import eu.opentxs.bridge.core.Interpreter;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.NymModule;
 
@@ -25,11 +26,11 @@ public class NymCommands extends Commands {
 
 	public static class CreateNym extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymName = getString(0);
 			execute(nymName);
 		}
-		public static void execute(String nymName) throws Exception {
+		public static void execute(String nymName) throws OTException {
 			String nymId = NymModule.createNym();
 			NymModule.renameNym(nymId, nymName);
 			if (!Util.isValidString(DataModel.getMyNymId()))
@@ -51,7 +52,7 @@ public class NymCommands extends Commands {
 	public static class EditNym extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -73,12 +74,12 @@ public class NymCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			String nymName = getString(1);
 			execute(nymId, nymName);
 		}
-		public static void execute(String nymId, String nymName) throws Exception {
+		public static void execute(String nymId, String nymName) throws OTException {
 			NymModule.renameNym(nymId, nymName);
 		}
 	}
@@ -87,7 +88,7 @@ public class NymCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -126,13 +127,13 @@ public class NymCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds);
 			execute(serverId, nymId);
 		}
 
-		public static void execute(String serverId, String nymId) throws Exception {
+		public static void execute(String serverId, String nymId) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			nymModule.registerNymAtServer();
 		}
@@ -142,7 +143,7 @@ public class NymCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -181,13 +182,13 @@ public class NymCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds);
 			execute(serverId, nymId);
 		}
 
-		public static void execute(String serverId, String nymId) throws Exception {
+		public static void execute(String serverId, String nymId) throws OTException {
 			Module.showNym(nymId);
 			if (readBooleanFromInput("Are you sure you want to remove this nym from server?")) {
 				NymModule nymModule = new NymModule(serverId, nymId);
@@ -199,7 +200,7 @@ public class NymCommands extends Commands {
 	public static class DeleteNym extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -221,11 +222,11 @@ public class NymCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds);
 			execute(nymId);
 		}
-		public static void execute(String nymId) throws Exception {
+		public static void execute(String nymId) throws OTException {
 			Module.showNym(nymId);
 			if (readBooleanFromInput("Are you sure you want to delete this nym?")) {
 				String serverId = null;
@@ -249,7 +250,7 @@ public class NymCommands extends Commands {
 	public static class ExportNym extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -271,12 +272,12 @@ public class NymCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			execute(nymId);
 		}
 
-		public static void execute(String nymId) throws Exception {
+		public static void execute(String nymId) throws OTException {
 			String contract = NymModule.exportNym(nymId);
 			if (readBooleanFromInput("Would you like to save the nym contract to a file?"))
 				writeStringToFile(Text.FOLDER_NYMS, Extension.CONTRACT, contract);
@@ -289,7 +290,7 @@ public class NymCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String contract = readStringFromInput("Paste a nym contract here");
 			if (Util.isValidString(contract) && isValidNymContract(contract)) {
 				contract = Interpreter.restoreNewLines(contract);
@@ -304,7 +305,7 @@ public class NymCommands extends Commands {
 			execute(contract);
 		}
 
-		public static void execute(String contract) throws Exception {
+		public static void execute(String contract) throws OTException {
 			NymModule.importNym(contract);
 		}
 	}

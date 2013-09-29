@@ -1,12 +1,15 @@
 package eu.opentxs.bridge.core.modules.act;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import eu.ApplProperties;
-import eu.opentxs.bridge.Text;
 import eu.opentxs.bridge.Util;
 import eu.opentxs.bridge.core.dto.Transaction;
 import eu.opentxs.bridge.core.dto.Transaction.TransactionType;
+import eu.opentxs.bridge.core.exceptions.OTException;
+import eu.opentxs.bridge.core.exceptions.OTSystemException;
+import eu.opentxs.bridge.core.exceptions.OTSystemException.Event;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.OTAPI;
 
@@ -14,12 +17,12 @@ public class NymModule extends ServerModule {
 
 	protected String nymId;
 
-	public NymModule(String serverId, String nymId) throws Exception {
+	public NymModule(String serverId, String nymId) throws OTException {
 		super(serverId);
 		this.nymId = parseNymId(nymId);
 	}
 
-	public void pingServer() throws Exception {
+	public void pingServer() throws OTException {
 		attempt("Pinging server");
 		sendRequest(new RequestGenerator() {
 			@Override
@@ -30,7 +33,7 @@ public class NymModule extends ServerModule {
 		success("Ping is done");
 	}
 
-	public static String createNym() throws Exception {
+	public static String createNym() throws OTException {
 		attempt("Creating new nym");
 		String nymId = OTAPI.createNym(ApplProperties.get().getInteger("encoding.keySize"), new String(""), new String(""));
 		if (!Util.isValidString(nymId))
@@ -39,10 +42,10 @@ public class NymModule extends ServerModule {
 		return nymId;
 	}
 
-	public static void renameNym(String nymId, String nymName) throws Exception {
+	public static void renameNym(String nymId, String nymName) throws OTException {
 		attempt("Renaming nym");
 		nymId = parseNymId(nymId);
-		if (!OTAPI.setNymName(nymId, nymName))
+		if (!OTAPI.SetNym.name(nymId, nymName))
 			error("Failed to rename");
 		success("Nym is renamed");
 		showNym(nymId);
@@ -52,10 +55,10 @@ public class NymModule extends ServerModule {
 		return OTAPI.isNymRegisteredAtServer(serverId, nymId);
 	}
 
-	public void registerNymAtServer() throws Exception {
+	public void registerNymAtServer() throws OTException {
 		attempt("Registering nym at server");
 		if (isNymRegisteredAtServer(serverId, nymId)) {
-			print("Already registered");
+			info("Already registered");
 			return;
 		}
 		sendRequest(new RequestGenerator() {
@@ -70,7 +73,7 @@ public class NymModule extends ServerModule {
 		success("Nym is registered");
 	}
 
-	public void resyncNymWithServer() throws Exception {
+	public void resyncNymWithServer() throws OTException {
 		attempt("Resyncing nym with server");
 		String message = sendRequest(new RequestGenerator() {
 			@Override
@@ -83,10 +86,10 @@ public class NymModule extends ServerModule {
 		success("Resyncing done");
 	}
 
-	public void removeNymFromServer() throws Exception {
+	public void removeNymFromServer() throws OTException {
 		attempt("Removing nym from server");
 		if (!isNymRegisteredAtServer(serverId, nymId)) {
-			print("Already removed. Nym is not registered at this server.");
+			info("Already removed. Nym is not registered at this server.");
 			return;
 		}
 		sendRequest(new RequestGenerator() {
@@ -98,7 +101,7 @@ public class NymModule extends ServerModule {
 		success("Nym is removed");
 	}
 
-	public static String isNymRegisteredAtAnyServer(String nymId) throws Exception {
+	public static String isNymRegisteredAtAnyServer(String nymId) throws OTException {
 		nymId = parseNymId(nymId);
 		List<String> serverIds = getServerIds();
 		for (String serverId : serverIds) {
@@ -108,18 +111,18 @@ public class NymModule extends ServerModule {
 		return null;
 	}
 
-	public static void deleteNym(String nymId) throws Exception {
+	public static void deleteNym(String nymId) throws OTException {
 		attempt("Deleting nym");
 		nymId = parseNymId(nymId);
 		String serverId = isNymRegisteredAtAnyServer(nymId);
 		if (serverId != null)
 			error(String.format("%s %s", "This nym is still registered at server", getServerName(serverId)));
-		if (!OTAPI.deleteNym(nymId))
+		if (!OTAPI.Wallet.deleteNym(nymId))
 			error("Failed to delete nym");
 		success("Nym is deleted");
 	}
 
-	public static String exportNym(String nymId) throws Exception {
+	public static String exportNym(String nymId) throws OTException {
 		attempt("Exporting nym");
 		nymId = parseNymId(nymId);
 		String contract = OTAPI.Wallet.exportNym(nymId);
@@ -130,7 +133,7 @@ public class NymModule extends ServerModule {
 		return contract;
 	}
 
-	public static String importNym(String contract) throws Exception {
+	public static String importNym(String contract) throws OTException {
 		attempt("Importing nym");
 		if (!Util.isValidString(contract))
 			error("content is empty");
@@ -142,18 +145,18 @@ public class NymModule extends ServerModule {
 		return nymId;
 	}
 
-	public static void showNymAccounts(String nymId) throws Exception {
+	public static void showNymAccounts(String nymId) throws OTException {
 		nymId = parseNymId(nymId);
 		print(String.format("%12s:", "ACCOUNTS"));
 		int accountCount = OTAPI.getAccountCount();
 		for (int index = 0; index < accountCount; index++) {
-			String accountId = OTAPI.getAccountId(index);
+			String accountId = OTAPI.GetAccount.id(index);
 			if (getAccountNymId(accountId).equals(nymId))
 				showLedger(accountId);
 		}
 	}
 
-	public String issueAsset(final String contract, String accountName) throws Exception {
+	public String issueAsset(final String contract, String accountName) throws OTException {
 		attempt("Issuing asset");
 
 		/**
@@ -172,7 +175,7 @@ public class NymModule extends ServerModule {
 				return OTAPI.issueAsset(serverId, nymId, contract);
 			}
 		});
-		String accountId = OTAPI.getNewIssuerAccountId(message);
+		String accountId = OTAPI.Message.getNewIssuerAccountId(message);
 		if (!Util.isValidString(accountId))
 			error("Account created but failed to retreive its id");
 		if (!Util.isValidString(accountName))
@@ -182,10 +185,10 @@ public class NymModule extends ServerModule {
 		return accountId;
 	}
 
-	public void showNymbox() throws Exception {
+	public void showNymbox() throws OTException {
 		String ledger = OTAPI.loadNymbox(serverId, nymId);
 		if (!Util.isValidString(ledger)) {
-			print("Nymbox is empty");
+			log("Nymbox ledger is empty");
 			return;
 		}
 		int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
@@ -193,14 +196,20 @@ public class NymModule extends ServerModule {
 			if (size < 0)
 				warn("Nymbox size is abnormal", size);
 			else
-				print("Nymbox size is zero");
+				log("Nymbox size is zero");
 			return;
 		}
-		List<Transaction> list = Transaction.getListForNym(serverId, nymId, null, ledger, size);
+		List<Transaction> list = new ArrayList<Transaction>();
+		for (int index = 0; index < size; index++) {
+			Transaction transaction = Transaction.getTransactionForNym(
+					serverId, nymId, null, ledger, index);
+			if (transaction != null)
+				list.add(transaction);
+		}
 		Transaction.showV(list);
 	}
 
-	public void sendCash(String cash, String hisNymId) throws Exception {
+	public void sendCash(String cash, String hisNymId) throws OTException {
 		attempt("Sending cash");
 		if (!Util.isValidString(cash))
 			error("cash is empty");
@@ -210,21 +219,22 @@ public class NymModule extends ServerModule {
 		success("Cash is sent");
 	}
 
-	public void discardCheque(String cheque) throws Exception {
+	public void discardCheque(String cheque) throws OTException {
 		attempt("Discarding cheque");
 		String ledger = OTAPI.loadPayInbox(serverId, nymId);
 		if (!Util.isValidString(ledger))
-			error("PayInbox is empty");
+			error("payinbox ledger is empty");
 		int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
 		if (size <= 0)
-			error("PayInbox size is zero or negative");
+			error("payinbox size is zero or negative");
 		String trxnNum = OTAPI.Instrument.getTransactionNum(cheque);
 		for (int index = 0; index < size; index++) {
 			String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
 			if (!Util.isValidString(instrument))
 				error("instrument is empty");
 			if (trxnNum.equals(OTAPI.Instrument.getTransactionNum(instrument))) {
-				OTAPI.recordPayment(serverId, nymId, true, index, false);
+				if (!OTAPI.recordPayment(serverId, nymId, true, index, false))
+					error("failed to record payment");
 				success("Cheque is discarded");
 				return;
 			}
@@ -232,33 +242,50 @@ public class NymModule extends ServerModule {
 		error("Cheque not found");
 	}
 
-	public void discardInvoice(String invoice) throws Exception {
+	public void discardInvoice(String invoice) throws OTException {
 		attempt("Discarding invoice");
 		String ledger = OTAPI.loadPayInbox(serverId, nymId);
 		if (!Util.isValidString(ledger))
-			error("PayInbox is empty");
+			error("payinbox ledger is empty");
 		int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
 		if (size <= 0)
-			error("PayInbox size is zero or abnormal");
+			error("payinbox size is zero or abnormal");
 		String trxnNum = OTAPI.Instrument.getTransactionNum(invoice);
 		for (int index = 0; index < size; index++) {
 			String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
 			if (!Util.isValidString(instrument))
 				error("instrument is empty");
 			if (trxnNum.equals(OTAPI.Instrument.getTransactionNum(instrument))) {
-				OTAPI.recordPayment(serverId, nymId, true, index, false);
+				if (!OTAPI.recordPayment(serverId, nymId, true, index, false))
+					error("failed to record payment");
 				success("Invoice is discarded");
 				return;
 			}
 		}
 		error("Invoice not found");
 	}
+	
+	public boolean checkHisNymId(final String hisNymId) throws OTException {
+		try {
+			sendRequest(new RequestGenerator() {
+				@Override
+				public int getRequest() {
+					return OTAPI.checkHisNymId(serverId, nymId, hisNymId);
+				}
+			});
+		} catch (OTSystemException e) {
+			if (!e.getEvent().equals(Event.MESSAGE_VERIFICATION_FAILED_WITH_ZERO))
+				error(e);
+			return false;
+		}
+		return true;
+	}
 
 	/**********************************************************************
 	 * internal
 	 *********************************************************************/
 
-	protected void sendPayment(final String payment, final String hisNymId) throws Exception {
+	protected void sendPayment(final String payment, final String hisNymId) throws OTException {
 		attempt("Sending payment");
 		final String hisPublicKey = loadPublicEncryptionKey(hisNymId);
 		if (!Util.isValidString(hisPublicKey))
@@ -271,7 +298,7 @@ public class NymModule extends ServerModule {
 		});
 	}
 
-	protected void removeOutpayment(String trxnNum) throws Exception {
+	protected void removeOutpayment(String trxnNum) throws OTException {
 		int size = OTAPI.GetNym.outpaymentsCount(nymId);
 		if (size <= 0)
 			error("Outpayments size is zero or abnormal");
@@ -280,7 +307,8 @@ public class NymModule extends ServerModule {
 			if (!Util.isValidString(instrument))
 				Module.error("instrument is empty");
 			if (trxnNum.equals(OTAPI.Instrument.getTransactionNum(instrument))) {
-				OTAPI.Nym.removeOutpaymentsByIndex(nymId, index);
+				if (!OTAPI.Nym.removeOutpaymentsByIndex(nymId, index))
+					error("failed to remove outpayment");
 				success("Outpayment is removed");
 				return;
 			}
@@ -288,53 +316,48 @@ public class NymModule extends ServerModule {
 		error("Outpayment not found");
 	}
 
-	protected String sendRequest(RequestGenerator generator) throws Exception {
-		return sendRequest(generator, false);
+	protected String sendRequest(RequestGenerator generator) throws OTException {
+		return sendRequest1(generator, false);
 	}
 
-	protected String sendRequest(RequestGenerator generator, boolean forceContinue) throws Exception {
+	protected String sendRequest1(RequestGenerator generator, boolean forceContinue) throws OTException {
 		OTAPI.flushMessageBuffer();
 		int requestId = generator.getRequest();
-		return processRequest(requestId, forceContinue);
+		return processRequest(requestId);
 	}
 
-	protected String processRequest(int requestId, boolean forceContinue) throws Exception {
+	protected String processRequest(int requestId) throws OTException {
 		{
-			attempt(Text.VERIFYING_REQUEST);
+			attempt("Verifying request");
 			if (requestId == 0) {
-				warn(Text.REQUEST_ID_ZERO, requestId);
+				warn(Event.REQUEST_ID_ZERO, requestId);
 				return null;
 			}
 			if (requestId < 0)
-				error(Text.REQUEST_ID_NEGATIVE, requestId);
+				error(Event.REQUEST_ID_NEGATIVE, requestId);
 		}
 		delay();
 		String message;
 		{
-			attempt(Text.RECEIVING_MESSAGE);
+			attempt("Receiving message");
 			message = OTAPI.popMessageBuffer(Integer.toString(requestId), serverId, nymId);
 			if (!Util.isValidString(message))
-				error(Text.MESSAGE_IS_INVALID);
+				error(Event.MESSAGE_IS_INVALID);
 			if (verboseServer)
 				print(message);
 		}
 		{
-			attempt(Text.VERIFYING_MESSAGE);
-			int result = OTAPI.verifyMessage(message);
-			if (result == 0) {
-				if (forceContinue) {
-					warn(Text.MESSAGE_VERIFICATION_FAILED, result);
-					return null;
-				}
-				error(Text.MESSAGE_VERIFICATION_ERROR, result);
-			}
+			attempt("Verifying message");
+			int result = OTAPI.Message.getSuccess(message);
+			if (result == 0)
+				error(Event.MESSAGE_VERIFICATION_FAILED_WITH_ZERO, result);
 			if (result != 1)
-				error(Text.MESSAGE_VERIFICATION_ERROR, result);
+				error(Event.MESSAGE_VERIFICATION_ERROR, result);
 		}
 		return message;
 	}
 
-	protected void synchronizeRequestNumber() throws Exception {
+	protected void synchronizeRequestNumber() throws OTException {
 		attempt("Synchronizing request number");
 		sendRequest(new RequestGenerator() {
 			@Override
@@ -345,13 +368,14 @@ public class NymModule extends ServerModule {
 		success("Request number is synchronized");
 	}
 
-	protected void getAndProcessNymbox(boolean forceDownload) throws Exception {
+	protected List<Transaction> getAndProcessNymbox(boolean forceDownload) throws OTException {
+		List<Transaction> transactions = new ArrayList<Transaction>();
 		{
 			attempt("Verifying nymbox hash");
-			String cachedHash = OTAPI.getNymboxHashCached(serverId, nymId);
+			String cachedHash = OTAPI.GetNym.nymboxHashCached(serverId, nymId);
 			if (!Util.isValidString(cachedHash))
 				warn("Unable to retrieve cached copy of server-side nymbox hash");
-			String localHash = OTAPI.getNymboxHashLocal(serverId, nymId);
+			String localHash = OTAPI.GetNym.nymboxHashLocal(serverId, nymId);
 			if (!Util.isValidString(localHash))
 				warn("Unable to retrieve client-side nymbox hash");
 			if (!forceDownload && cachedHash.equals(localHash)) {
@@ -368,6 +392,20 @@ public class NymModule extends ServerModule {
 			}
 		}
 		{
+			String ledger = OTAPI.loadNymbox(serverId, nymId);
+			if (!Util.isValidString(ledger))
+				error("nymbox ledger is empty");
+			int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
+			for (int index = 0; index < size; index++) {
+				String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
+				if (!Util.isValidString(instrument))
+					//error("instrument is empty");
+					continue;// /when the account is new, the instrument is for an unknown reason empty
+				String assetId = OTAPI.Instrument.getAssetId(instrument);
+				transactions.add(Transaction.getTransactionForNym(serverId, nymId, assetId, ledger, index));
+			}
+		}
+		{
 			attempt("Processing nymbox");
 			sendRequest(new RequestGenerator() {
 				@Override
@@ -376,9 +414,10 @@ public class NymModule extends ServerModule {
 				}
 			});
 		}
+		return transactions;
 	}
 
-	protected void insureHaveAllBoxReceipts(final OTAPI.Box box, final String accountId) throws Exception {
+	protected void insureHaveAllBoxReceipts(final OTAPI.Box box, final String accountId) throws OTException {
 		attempt(String.format("%s %s", "Insuring box receipts for", box.name()));
 		String ledger = null;
 		if (box.equals(OTAPI.Box.INBOX))
@@ -427,12 +466,12 @@ public class NymModule extends ServerModule {
 		}
 	}
 
-	protected void getTransactionNumbers() throws Exception {
+	protected void getTransactionNumbers() throws OTException {
 		getTransactionNumbers(true);
 	}
 
-	private void getTransactionNumbers(boolean canRetry) throws Exception {
-		int count = getTransactionNumbersCount();
+	private void getTransactionNumbers(boolean canRetry) throws OTException {
+		int count = OTAPI.GetNym.transactionNumCount(serverId, nymId);
 		if (isEnoughTransactionNumbers(count)) {
 			skip(String.format("The nym still has %d transaction numbers left", count));
 			return;
@@ -440,13 +479,20 @@ public class NymModule extends ServerModule {
 		attempt("Fetching transaction numbers");
 		synchronizeRequestNumber();
 		getAndProcessNymbox(true);
-		sendRequest(new RequestGenerator() {
-			@Override
-			public int getRequest() {
-				return OTAPI.getTransactionNumbers(serverId, nymId);
-			}
-		}, true);
-		count = OTAPI.getTransactionNumbersCount(serverId, nymId);
+		
+		try {
+			sendRequest(new RequestGenerator() {
+				@Override
+				public int getRequest() {
+					return OTAPI.getTransactionNumbers(serverId, nymId);
+				}
+			});
+		} catch (OTSystemException e) {
+			if (!e.getEvent().equals(Event.MESSAGE_VERIFICATION_FAILED_WITH_ZERO))
+				error(e);
+		}
+		
+		count = OTAPI.GetNym.transactionNumCount(serverId, nymId);
 		if (!isEnoughTransactionNumbers(count)) {
 			if (canRetry) {
 				warn("Contingency plan");
@@ -459,13 +505,18 @@ public class NymModule extends ServerModule {
 				warn("One more time");
 				synchronizeRequestNumber();
 				getAndProcessNymbox(true);
-				sendRequest(new RequestGenerator() {
-					@Override
-					public int getRequest() {
-						return OTAPI.getTransactionNumbers(serverId, nymId);
-					}
-				}, true);
-				count = getTransactionNumbersCount();
+				try {
+					sendRequest(new RequestGenerator() {
+						@Override
+						public int getRequest() {
+							return OTAPI.getTransactionNumbers(serverId, nymId);
+						}
+					});
+				} catch (OTSystemException e) {
+					if (!e.getEvent().equals(Event.MESSAGE_VERIFICATION_FAILED_WITH_ZERO))
+						error(e);
+				}
+				count = OTAPI.GetNym.transactionNumCount(serverId, nymId);
 				if (!isEnoughTransactionNumbers(count))
 					error("I give up");
 			}
@@ -473,31 +524,22 @@ public class NymModule extends ServerModule {
 		log(String.format("Now the nym has %d transaction numbers", count));
 	}
 
-	private int getTransactionNumbersCount() {
-		return OTAPI.getTransactionNumbersCount(serverId, nymId);
-	}
-
 	private static boolean isEnoughTransactionNumbers(int count) {
 		int limit = ApplProperties.get().getInteger("transactionNumber.limit");
 		return (count >= limit);
 	}
 
-	private String loadPublicEncryptionKey(final String hisNymId) throws Exception {
+	private String loadPublicEncryptionKey(final String hisNymId) throws OTException {
 		attempt("Loading public encryption key");
 		String key = getPublicEncryptionKey(hisNymId);
 		if (!Util.isValidString(key)) {
-			sendRequest(new RequestGenerator() {
-				@Override
-				public int getRequest() {
-					return OTAPI.checkUser(serverId, nymId, hisNymId);
-				}
-			});
-			key = getPublicEncryptionKey(hisNymId);
+			if (checkHisNymId(hisNymId))
+				key = getPublicEncryptionKey(hisNymId);
 		}
 		return key;// might be null
 	}
 
-	private static String getPublicEncryptionKey(String hisNymId) throws Exception {
+	private static String getPublicEncryptionKey(String hisNymId) throws OTException {
 		String key = OTAPI.loadPublicKeyEncryption(hisNymId);
 		if (!Util.isValidString(key)) {
 			key = OTAPI.loadUserPublicKeyEncryption(hisNymId);
@@ -514,12 +556,12 @@ public class NymModule extends ServerModule {
 
 	private static void delay() {
 		long millis = ApplProperties.get().getLong("processRequest.delay");
-		try {
-			if (millis > 0)
+		if (millis > 0) {
+			try {
 				Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-
 }

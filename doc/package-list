@@ -4,6 +4,7 @@ eu.opentxs.bridge.core
 eu.opentxs.bridge.core.commands
 eu.opentxs.bridge.core.commands.act
 eu.opentxs.bridge.core.dto
+eu.opentxs.bridge.core.exceptions
 eu.opentxs.bridge.core.modules
 eu.opentxs.bridge.core.modules.act
 org.opentransactions.otapi

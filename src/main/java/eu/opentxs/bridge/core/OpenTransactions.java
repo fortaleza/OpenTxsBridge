@@ -45,7 +45,7 @@ public class OpenTransactions extends Interpreter {
 
 	private static Logger logger = Logger.getLogger(OpenTransactions.class.getName());
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		new OpenTransactions().run(null);
 		System.exit(0);
 	}
@@ -140,11 +140,7 @@ public class OpenTransactions extends Interpreter {
 	private static String getPasswordFromUser(String prompt) {
 		System.out.println(String.format("%s", prompt));
 		String password = null;
-		try {
-			password = ConsoleApplication.readLineFromConsole();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		password = ConsoleApplication.readLineFromConsole();
 		return password;
 	}
 

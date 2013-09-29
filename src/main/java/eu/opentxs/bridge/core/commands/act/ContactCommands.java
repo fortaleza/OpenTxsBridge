@@ -6,6 +6,7 @@ import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
 import eu.opentxs.bridge.core.dto.Contact;
 import eu.opentxs.bridge.core.dto.ContactAccount;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.ContactModule;
 
@@ -22,22 +23,22 @@ public class ContactCommands extends Commands {
 
 	public static class ShowContacts extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
-		public static void execute() throws Exception {
+		public static void execute() throws OTException {
 			ContactModule.showContacts();
 		}
 	}
 
 	public static class CreateContact extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = getString(0);
 			String name = getString(1);
 			execute(nymId, name);
 		}
-		public static void execute(String nymId, String name) throws Exception {
+		public static void execute(String nymId, String name) throws OTException {
 			ContactModule.createContact(nymId, name);
 		}
 	}
@@ -45,7 +46,7 @@ public class ContactCommands extends Commands {
 	public static class DeleteContact extends Command {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			contacts = Contact.getList();
 			if (contacts.size() == 0)
 				error("You have no contacts in your wallet");
@@ -71,7 +72,7 @@ public class ContactCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = (new Extractor<Contact>() {
 				@Override
 				public String get(Contact contact) {
@@ -80,7 +81,7 @@ public class ContactCommands extends Commands {
 			}).eval(0, contacts);
 			execute(nymId);
 		}
-		public static void execute(String nymId) throws Exception {
+		public static void execute(String nymId) throws OTException {
 			ContactModule.showContact(Contact.get(nymId));
 			if (readBooleanFromInput("Are you sure you want to delete this contact?"))
 				ContactModule.deleteContact(nymId);
@@ -90,7 +91,7 @@ public class ContactCommands extends Commands {
 	public static class EditContact extends Command {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			contacts = Contact.getList();
 			if (contacts.size() == 0)
 				error("You have no contacts in your wallet");
@@ -119,7 +120,7 @@ public class ContactCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = (new Extractor<Contact>() {
 				@Override
 				public String get(Contact contact) {
@@ -129,7 +130,7 @@ public class ContactCommands extends Commands {
 			String name = getString(1);
 			execute(nymId, name);
 		}
-		public static void execute(String nymId, String name) throws Exception {
+		public static void execute(String nymId, String name) throws OTException {
 			ContactModule.updateContact(nymId, name);
 		}
 	}
@@ -139,7 +140,7 @@ public class ContactCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -197,7 +198,7 @@ public class ContactCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds);
 			String nymId = (new Extractor<Contact>() {
 				@Override
@@ -209,7 +210,7 @@ public class ContactCommands extends Commands {
 			String accountId = getString(3);
 			execute(accountId, assetId, nymId, serverId);
 		}
-		public static void execute(String accountId, String assetId, String nymId, String serverId) throws Exception {
+		public static void execute(String accountId, String assetId, String nymId, String serverId) throws OTException {
 			ContactModule.createContactAccount(accountId, assetId, nymId, serverId);
 		}
 	}
@@ -217,7 +218,7 @@ public class ContactCommands extends Commands {
 	public static class DeleteContactAccount extends Command {
 		private List<ContactAccount> contactAccounts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			contactAccounts = ContactAccount.getList();
 			if (contactAccounts.size() == 0)
 				error("You have no contacts in your wallet account");
@@ -243,7 +244,7 @@ public class ContactCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String accountId = (new Extractor<ContactAccount>() {
 				@Override
 				public String get(ContactAccount contactAccount) {
@@ -252,7 +253,7 @@ public class ContactCommands extends Commands {
 			}).eval(0, contactAccounts);
 			execute(accountId);
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			ContactModule.deleteContactAccount(accountId);
 		}
 	}

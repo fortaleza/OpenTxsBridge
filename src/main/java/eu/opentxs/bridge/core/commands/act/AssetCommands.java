@@ -9,6 +9,7 @@ import eu.opentxs.bridge.core.Interpreter;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
 import eu.opentxs.bridge.core.commands.act.ConfigCommands.SetAccount;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.AssetModule;
 import eu.opentxs.bridge.core.modules.act.NymModule;
@@ -28,7 +29,7 @@ public class AssetCommands extends Commands {
 	public static class CreateAsset extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -53,7 +54,7 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			String definition = readStringFromInput("Paste an asset definition here");
 			if (Util.isValidString(definition) && isValidAssetDefinition(definition)) {
@@ -69,7 +70,7 @@ public class AssetCommands extends Commands {
 			execute(nymId, definition);
 		}
 
-		public static void execute(String nymId, String definition) throws Exception {
+		public static void execute(String nymId, String definition) throws OTException {
 			String assetId = AssetModule.createAsset(nymId, definition);
 			String contract = AssetModule.getAssetContract(assetId);
 			if (readBooleanFromInput("Would you like to save the new asset contract to a file?"))
@@ -88,7 +89,7 @@ public class AssetCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String contract = readStringFromInput("Paste an asset contract here");
 			if (Util.isValidString(contract) && isValidAssetContract(contract)) {
 				contract = Interpreter.restoreNewLines(contract);
@@ -103,7 +104,7 @@ public class AssetCommands extends Commands {
 			execute(contract);
 		}
 
-		public static void execute(String contract) throws Exception {
+		public static void execute(String contract) throws OTException {
 			String assetId = AssetModule.addAsset(contract);
 			if (!Util.isValidString(DataModel.getMyAssetId()))
 				Module.setMyAssetId(assetId);
@@ -120,7 +121,7 @@ public class AssetCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -159,7 +160,7 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds, DataModel.getMyNymId());
 			String contract = readStringFromInput("Paste an asset contract here");
@@ -177,7 +178,7 @@ public class AssetCommands extends Commands {
 			execute(serverId, nymId, contract, accountName);
 		}
 
-		public static void execute(String serverId, String nymId, String contract, String accountName) throws Exception {
+		public static void execute(String serverId, String nymId, String contract, String accountName) throws OTException {
 			{
 				int index = contract.indexOf("nymID=");
 				if (index == 0)
@@ -205,7 +206,7 @@ public class AssetCommands extends Commands {
 	public static class EditAsset extends Command {
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			assetIds = Module.getAssetIds();
 			if (assetIds.size() == 0)
 				error("You have no assets in your wallet");
@@ -227,12 +228,12 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String assetId = new PlainExtractor().eval(0, assetIds, DataModel.getMyAssetId());
 			String assetName = getString(1);
 			execute(assetId, assetName);
 		}
-		public static void execute(String assetId, String assetName) throws Exception {
+		public static void execute(String assetId, String assetName) throws OTException {
 			AssetModule.renameAsset(assetId, assetName);
 		}
 	}
@@ -240,7 +241,7 @@ public class AssetCommands extends Commands {
 	public static class ShowAssetContract extends Command {
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			assetIds = Module.getAssetIds();
 			if (assetIds.size() == 0)
 				error("You have no assets in your wallet");
@@ -262,11 +263,11 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String assetId = new PlainExtractor().eval(0, assetIds, DataModel.getMyAssetId());
 			execute(assetId);
 		}
-		public static void execute(String assetId) throws Exception {
+		public static void execute(String assetId) throws OTException {
 			String contract = AssetModule.showAssetContract(assetId);
 			if (readBooleanFromInput("Would you like to save the asset contract to a file?"))
 				writeStringToFile(Text.FOLDER_ASSETS, Extension.CONTRACT, contract);
@@ -276,7 +277,7 @@ public class AssetCommands extends Commands {
 	public static class ShowAssetAccounts extends Command {
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			assetIds = Module.getAssetIds();
 			if (assetIds.size() == 0)
 				error("You have no assets in your wallet");
@@ -298,11 +299,11 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String assetId = new PlainExtractor().eval(0, assetIds, DataModel.getMyAssetId());
 			execute(assetId);
 		}
-		public static void execute(String assetId) throws Exception {
+		public static void execute(String assetId) throws OTException {
 			AssetModule.showAssetAccounts(assetId);
 		}
 	}
@@ -310,7 +311,7 @@ public class AssetCommands extends Commands {
 	public static class DeleteAsset extends Command {
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			assetIds = Module.getAssetIds();
 			if (assetIds.size() == 0)
 				error("You have no assets in your wallet");
@@ -332,11 +333,11 @@ public class AssetCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String assetId = new PlainExtractor().eval(0, assetIds);
 			execute(assetId);
 		}
-		public static void execute(String assetId) throws Exception {
+		public static void execute(String assetId) throws OTException {
 			Module.showAsset(assetId);
 			if (readBooleanFromInput("Are you sure you want to delete this asset?")) {
 				AssetModule.deleteAsset(assetId);

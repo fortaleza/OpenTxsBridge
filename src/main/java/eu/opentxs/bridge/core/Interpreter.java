@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.ApplProperties;
-import eu.opentxs.bridge.Localizer;
 import eu.opentxs.bridge.Text;
+import eu.opentxs.bridge.Localizer;
 import eu.opentxs.bridge.core.Console.ConsoleApplication;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
@@ -33,7 +33,7 @@ public class Interpreter extends ConsoleApplication {
 		return s;
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		new Interpreter().run(null);
 		System.exit(0);
 	}

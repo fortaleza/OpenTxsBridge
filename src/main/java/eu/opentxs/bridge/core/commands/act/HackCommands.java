@@ -10,6 +10,7 @@ import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
 import eu.opentxs.bridge.core.dto.Contact;
 import eu.opentxs.bridge.core.dto.ContactAccount;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.AccountModule;
 import eu.opentxs.bridge.core.modules.act.AssetModule;
@@ -38,10 +39,10 @@ public class HackCommands extends Commands {
 
 	public static class Reset extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
-		public static void execute() throws Exception {
+		public static void execute() throws OTException {
 			Module.setMyServerId(null);
 			Module.setMyNymId(null);
 			Module.setMyAssetId(null);
@@ -60,7 +61,7 @@ public class HackCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -99,12 +100,12 @@ public class HackCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds, DataModel.getMyNymId());
 			execute(serverId, nymId);
 		}
-		public static void execute(String serverId, String nymId) throws Exception {
+		public static void execute(String serverId, String nymId) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			nymModule.pingServer();
 		}
@@ -112,25 +113,25 @@ public class HackCommands extends Commands {
 
 	public static class Time extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
-		public static void execute() throws Exception {
+		public static void execute() throws OTException {
 			Module.showTime();
 		}
 	}
 
 	public static class Download extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.downloadFiles();
 		}
@@ -138,15 +139,15 @@ public class HackCommands extends Commands {
 
 	public static class ProcessInbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.processInbox();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
@@ -155,15 +156,15 @@ public class HackCommands extends Commands {
 
 	public static class ProcessIncome extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.processIncome();
 			System.out.println(Text.COMMAND_ENDED_WITH_SUCCESS);
@@ -172,15 +173,15 @@ public class HackCommands extends Commands {
 
 	public static class Verify extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.verifyLastReceipt();
 		}
@@ -188,15 +189,15 @@ public class HackCommands extends Commands {
 
 	public static class Inbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.showInbox();
 		}
@@ -204,15 +205,15 @@ public class HackCommands extends Commands {
 
 	public static class Outbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyAccountId());
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.showOutbox();
 		}
@@ -220,15 +221,15 @@ public class HackCommands extends Commands {
 
 	public static class Nymbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId());
 		}
-		public static void execute(String serverId, String nymId) throws Exception {
+		public static void execute(String serverId, String nymId) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			nymModule.showNymbox();
 		}
@@ -236,15 +237,15 @@ public class HackCommands extends Commands {
 
 	public static class PayInbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 		}
-		public static void execute(String serverId, String nymId, String assetId) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws OTException {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.showPayInbox();
 		}
@@ -252,15 +253,15 @@ public class HackCommands extends Commands {
 
 	public static class PayOutbox extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
 		}
-		public static void execute(String serverId, String nymId, String assetId) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws OTException {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.showPayOutbox();
 		}
@@ -271,7 +272,7 @@ public class HackCommands extends Commands {
 		private List<String> nymIds;
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -320,13 +321,13 @@ public class HackCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds, DataModel.getMyNymId());
 			String assetId = new PlainExtractor().eval(2, assetIds, DataModel.getMyAssetId());
 			execute(serverId, nymId, assetId);
 		}
-		public static void execute(String serverId, String nymId, String assetId) throws Exception {
+		public static void execute(String serverId, String nymId, String assetId) throws OTException {
 			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 			assetModule.queryAsset();
 		}
@@ -336,7 +337,7 @@ public class HackCommands extends Commands {
 		private List<String> serverIds;
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -375,12 +376,12 @@ public class HackCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String nymId = new PlainExtractor().eval(1, nymIds);
 			execute(serverId, nymId);
 		}
-		public static void execute(String serverId, String nymId) throws Exception {
+		public static void execute(String serverId, String nymId) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			nymModule.resyncNymWithServer();
 		}
@@ -388,24 +389,24 @@ public class HackCommands extends Commands {
 
 	public static class Hack1 extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			AccountModule.getInstance(DataModel.getMyAccountId()).hack1();
 		}
 	}
 
 	public static class Hack2 extends Command {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			AccountModule.getInstance(DataModel.getMyAccountId()).hack2();
 		}
 	}

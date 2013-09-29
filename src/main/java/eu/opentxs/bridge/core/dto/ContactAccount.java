@@ -65,7 +65,7 @@ public class ContactAccount implements Serializable {
 	public static ContactAccount add(String accountId, String assetId, String nymId, String serverId) {
 		ContactAccount contactAccount = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			contactAccount = (ContactAccount) sess.get(ContactAccount.class, accountId);
 			if (contactAccount != null) {
@@ -89,7 +89,7 @@ public class ContactAccount implements Serializable {
 	public static boolean delete(String accountId) {
 		Session sess = null;
 		ContactAccount contactAccount = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			contactAccount = (ContactAccount) sess.get(ContactAccount.class, accountId);
 			if (contactAccount != null)
@@ -105,7 +105,7 @@ public class ContactAccount implements Serializable {
 	public static ContactAccount get(String accountId) {
 		Session sess = null;
 		ContactAccount contactAccount = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			contactAccount = (ContactAccount) sess.get(ContactAccount.class, accountId);
 		} catch (Exception e) {
@@ -120,7 +120,7 @@ public class ContactAccount implements Serializable {
 	public static List<ContactAccount> getList() {
 		List<ContactAccount> contactAccounts = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			String sql = "FROM ContactAccount";
 			contactAccounts = sess.createQuery(sql).list();
@@ -136,7 +136,7 @@ public class ContactAccount implements Serializable {
 	public static List<ContactAccount> getList(String nymId) {
 		List<ContactAccount> contactAccounts = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			String sql = "FROM ContactAccount";
 			sql += String.format(" WHERE nymId='%s'", nymId);
@@ -153,7 +153,7 @@ public class ContactAccount implements Serializable {
 	public static List<ContactAccount> getList(String serverId, String assetId) {
 		List<ContactAccount> contactAccounts = null;
 		Session sess = null;
-		try {
+		try {//fatal
 			sess = Contact.getDatabase().beginTransaction();
 			String sql = "FROM ContactAccount";
 			sql += String.format(" WHERE serverId='%s'", serverId);

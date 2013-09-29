@@ -8,6 +8,7 @@ import eu.opentxs.bridge.core.DataModel;
 import eu.opentxs.bridge.core.Interpreter;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.ServerModule;
 
@@ -25,7 +26,7 @@ public class ServerCommands extends Commands {
 	public static class CreateServer extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -50,7 +51,7 @@ public class ServerCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds, DataModel.getMyNymId());
 			String definition = readStringFromInput("Paste a server definition here");
 			if (Util.isValidString(definition) && isValidServerDefinition(definition)) {
@@ -65,7 +66,7 @@ public class ServerCommands extends Commands {
 			}
 			execute(nymId, definition);
 		}
-		public static void execute(String nymId, String definition) throws Exception {
+		public static void execute(String nymId, String definition) throws OTException {
 			String serverId = ServerModule.createServer(nymId, definition);
 			if (readBooleanFromInput("Would you like to save the new server contract to a file?")) {
 				String contract = ServerModule.getServerContract(serverId);
@@ -81,7 +82,7 @@ public class ServerCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String contract = readStringFromInput("Paste a signed server contract here");
 			if (Util.isValidString(contract) && isValidServerContract(contract)) {
 				contract = Interpreter.restoreNewLines(contract);
@@ -95,7 +96,7 @@ public class ServerCommands extends Commands {
 			}
 			execute(contract);
 		}
-		public static void execute(String contract) throws Exception {
+		public static void execute(String contract) throws OTException {
 			String serverId = ServerModule.addServer(contract);
 			if (Module.getServerIds().size() == 1 || readBooleanFromInput("Would you like to set it as your server?"))
 				Module.setMyServerId(serverId);
@@ -105,7 +106,7 @@ public class ServerCommands extends Commands {
 	public static class EditServer extends Command {
 		private List<String> serverIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -127,13 +128,13 @@ public class ServerCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			String serverName = getString(1);
 			execute(serverId, serverName);
 		}
 
-		public static void execute(String serverId, String serverName) throws Exception {
+		public static void execute(String serverId, String serverName) throws OTException {
 			ServerModule.renameServer(serverId, serverName);
 		}
 	}
@@ -141,7 +142,7 @@ public class ServerCommands extends Commands {
 	public static class ShowServerContract extends Command {
 		private List<String> serverIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -163,11 +164,11 @@ public class ServerCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			execute(serverId);
 		}
-		public static void execute(String serverId) throws Exception {
+		public static void execute(String serverId) throws OTException {
 			String contract = ServerModule.showServerContract(serverId);
 			if (readBooleanFromInput("Would you like to save the server contract to a file?"))
 				writeStringToFile(Text.FOLDER_SERVERS, Extension.CONTRACT, contract);
@@ -177,7 +178,7 @@ public class ServerCommands extends Commands {
 	public static class ShowServerAccounts extends Command {
 		private List<String> serverIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -199,11 +200,11 @@ public class ServerCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds, DataModel.getMyServerId());
 			execute(serverId);
 		}
-		public static void execute(String serverId) throws Exception {
+		public static void execute(String serverId) throws OTException {
 			ServerModule.showServerAccounts(serverId);
 		}
 	}
@@ -211,7 +212,7 @@ public class ServerCommands extends Commands {
 	public static class DeleteServer extends Command {
 		private List<String> serverIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -233,12 +234,12 @@ public class ServerCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds);
 			execute(serverId);
 		}
 
-		public static void execute(String serverId) throws Exception {
+		public static void execute(String serverId) throws OTException {
 			Module.showServer(serverId);
 			if (readBooleanFromInput("Are you sure you want to delete this server?")) {
 				ServerModule.deleteServer(serverId);

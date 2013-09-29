@@ -1,11 +1,11 @@
 package eu.opentxs.bridge.core.dto;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import eu.opentxs.bridge.UTC;
 import eu.opentxs.bridge.Util;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.OTAPI;
 import eu.opentxs.bridge.core.modules.act.ContactModule;
@@ -95,7 +95,7 @@ public class Transaction implements Comparable<Transaction> {
 
 	private Transaction(String refNum, String dateSigned, String senderNymId, String senderAccountId, String recipientNymId,
 			String recipientAccountId, String hisNymId, String trxnNum, String instrument, InstrumentType instrumentType, TransactionType trxnType,
-			Side side, Status status, Double volume, String note, String validFrom, String validTo) {
+			Side side, Status status, String assetId, Integer value, String note, String validFrom, String validTo) {
 		super();
 		this.refNum = refNum;
 		this.dateSigned = dateSigned;
@@ -110,7 +110,8 @@ public class Transaction implements Comparable<Transaction> {
 		this.trxnType = trxnType;
 		this.side = side;
 		this.status = status;
-		this.volume = volume;
+		this.assetId = assetId;
+		this.value = value;
 		this.note = note;
 		this.validFrom = validFrom;
 		this.validTo = validTo;
@@ -129,12 +130,12 @@ public class Transaction implements Comparable<Transaction> {
 	private String trxnNum;
 	private String instrument;
 	private InstrumentType instrumentType;
-	@SuppressWarnings("unused")
 	private TransactionType trxnType;
 	private Side side;
 	private Status status;
 
-	private Double volume;
+	private String assetId;
+	private Integer value;
 	private String note;
 	private String validFrom;
 	private String validTo;
@@ -153,208 +154,198 @@ public class Transaction implements Comparable<Transaction> {
 	public InstrumentType getInstrumentType() {
 		return instrumentType;
 	}
+	
+	public TransactionType getTrxnType() {
+		return trxnType;
+	}
 
 	public Side getSide() {
 		return side;
 	}
+	
+	public static Transaction getTransactionForOutpayments(String serverId, String nymId, String assetId, int index, InstrumentType[] instrumentTypes) throws OTException {
+		if (!OTAPI.GetNym.outpaymentsServerIdByIndex(nymId, index).equals(serverId))
+			return null;
+		String instrument = OTAPI.GetNym.outpaymentsContentsByIndex(nymId, index);
+		if (!Util.isValidString(instrument))
+			Module.error("instrument is empty");
+		InstrumentType instrumentType = Module.getInstrumentType(instrument);
+		if (!verifyInstrumentType(instrumentTypes, instrumentType))
+			return null;
+		if (assetId != null && !OTAPI.Instrument.getAssetId(instrument).equals(assetId))
+			return null;
+		if (!OTAPI.Nym.verifyOutpaymentsByIndex(nymId, index))
+			Module.error("outpayment failed to verify");
+		String refNum = null;
+		String dateSigned = new Integer(Module.getTime().getSeconds()).toString();// /how to get dateSigned???
 
-	public static List<Transaction> getListOfOutpayments(String serverId, String nymId, String assetId, int size, InstrumentType[] instrumentTypes)
-			throws Exception {
-		List<Transaction> list = new ArrayList<Transaction>();
-		for (int index = 0; index < size; index++) {
-			if (!OTAPI.GetNym.outpaymentsServerIdByIndex(nymId, index).equals(serverId))
-				continue;
-			String instrument = OTAPI.GetNym.outpaymentsContentsByIndex(nymId, index);
-			if (!Util.isValidString(instrument))
-				Module.error("instrument is empty");
-			InstrumentType instrumentType = Module.getInstrumentType(instrument);
-			if (!verifyInstrumentType(instrumentTypes, instrumentType))
-				continue;
-			if (assetId != null && !OTAPI.Instrument.getAssetId(instrument).equals(assetId))
-				continue;
-			if (!OTAPI.Nym.verifyOutpaymentsByIndex(nymId, index))
-				Module.error("outpayment failed to verify");
-			String refNum = null;
-			String dateSigned = new Integer(Module.getTime().getSeconds()).toString();// /how to get dateSigned???
+		String senderNymId = nymId;
+		String senderAccountId = null;
+		String recipientNymId = OTAPI.GetNym.outpaymentsRecipientNymIdByIndex(nymId, index);
+		String recipientAccountId = null;
+		String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
 
-			String senderNymId = nymId;
-			String senderAccountId = null;
-			String recipientNymId = OTAPI.GetNym.outpaymentsRecipientNymIdByIndex(nymId, index);
-			String recipientAccountId = null;
-			String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
+		String trxnNum = OTAPI.Instrument.getTransactionNum(instrument);
+		TransactionType trxnType = null;
+		Side side = Side.SENT;
+		Status status = Status.NULL;
+		Integer value = 0 - Module.convertAmountToValue(OTAPI.Instrument.getAmount(instrument));
+		String note = OTAPI.Instrument.getNote(instrument);
+		String validFrom = OTAPI.Instrument.getValidFrom(instrument);
+		String validTo = OTAPI.Instrument.getValidTo(instrument);
 
-			String trxnNum = OTAPI.Instrument.getTransactionNum(instrument);
-			TransactionType trxnType = null;
-			Side side = Side.SENT;
-			Status status = Status.NULL;
-			Double volume = 0 - Module.getDouble(OTAPI.Instrument.getAmount(instrument));
-			String note = OTAPI.Instrument.getNote(instrument);
-			String validFrom = OTAPI.Instrument.getValidFrom(instrument);
-			String validTo = OTAPI.Instrument.getValidTo(instrument);
-
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
-					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
-		}
-		return list;
+		return new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+				instrument, instrumentType, trxnType, side, status, assetId, value, note, validFrom, validTo);
 	}
+	
+	public static Transaction getTransactionForNym(String serverId, String nymId, String assetId, String ledger, int index) throws OTException {
+		String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
+		if (!Util.isValidString(instrument))
+			Module.error("instrument is empty");
+		if (assetId != null && !OTAPI.Instrument.getAssetId(instrument).equals(assetId))
+			return null;
 
-	public static List<Transaction> getListForNym(String serverId, String nymId, String assetId, String ledger, int size) throws Exception {
-		List<Transaction> list = new ArrayList<Transaction>();
-		for (int index = 0; index < size; index++) {
-			String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
-			if (!Util.isValidString(instrument))
-				Module.error("instrument is empty");
-			if (assetId != null && !OTAPI.Instrument.getAssetId(instrument).equals(assetId))
-				continue;
+		String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, nymId, ledger, index);
+		if (!Util.isValidString(transaction))
+			Module.error("transaction is empty");
 
-			String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, nymId, ledger, index);
-			if (!Util.isValidString(transaction))
-				Module.error("transaction is empty");
+		String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, nymId, transaction);
+		String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, nymId, transaction);
 
-			String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, nymId, transaction);
-			String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, nymId, transaction);
+		String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, nymId, transaction);
+		String senderAccountId = null;
+		String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, nymId, transaction);
+		String recipientAccountId = null;
+		String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
 
-			String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, nymId, transaction);
-			String senderAccountId = null;
-			String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, nymId, transaction);
-			String recipientAccountId = null;
-			String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
+		String trxnNum = OTAPI.Instrument.getTransactionNum(instrument);
+		InstrumentType instrumentType = Module.getInstrumentType(instrument);
+		TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, nymId, transaction));
+		Side side;
+		if (trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
+			side = Side.RECEIVED;
+		else
+			side = null;
+		Status status = Status.NULL;
+		Integer value = Module.convertAmountToValue(OTAPI.Instrument.getAmount(instrument));
+		String note = OTAPI.Instrument.getNote(instrument);
+		String validFrom = OTAPI.Instrument.getValidFrom(instrument);
+		String validTo = OTAPI.Instrument.getValidTo(instrument);
 
-			String trxnNum = OTAPI.Instrument.getTransactionNum(instrument);
-			InstrumentType instrumentType = Module.getInstrumentType(instrument);
-			TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, nymId, transaction));
-			Side side;
-			if (trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
-				side = Side.RECEIVED;
-			else
-				side = null;
-			Status status = Status.NULL;
-			Double volume = Module.getDouble(OTAPI.Instrument.getAmount(instrument));
-			String note = OTAPI.Instrument.getNote(instrument);
-			String validFrom = OTAPI.Instrument.getValidFrom(instrument);
-			String validTo = OTAPI.Instrument.getValidTo(instrument);
-
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
-					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
-		}
-		return list;
+		return new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+				instrument, instrumentType, trxnType, side, status, assetId, value, note, validFrom, validTo);
 	}
+	
+	public static Transaction getTransactionForAccount(String serverId, String nymId, String accountId, String ledger, int index) throws OTException {
+		String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
+		if (!Util.isValidString(transaction))
+			Module.error("transaction is empty");
 
-	public static List<Transaction> getListForAccount(String serverId, String nymId, String accountId, String ledger, int size) throws Exception {
-		List<Transaction> list = new ArrayList<Transaction>();
-		for (int index = 0; index < size; index++) {
-			String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
-			if (!Util.isValidString(transaction))
-				Module.error("transaction is empty");
+		String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, accountId, transaction);
+		String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, accountId, transaction);
+		String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, accountId, transaction);
+		String senderAccountId = OTAPI.Transaction.getSenderAccountId(serverId, nymId, accountId, transaction);
+		String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, accountId, transaction);
+		String recipientAccountId = OTAPI.Transaction.getRecipientAccountId(serverId, nymId, accountId, transaction);
 
-			String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, accountId, transaction);
-			String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, accountId, transaction);
-			String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, accountId, transaction);
-			String senderAccountId = OTAPI.Transaction.getSenderAccountId(serverId, nymId, accountId, transaction);
-			String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, accountId, transaction);
-			String recipientAccountId = OTAPI.Transaction.getRecipientAccountId(serverId, nymId, accountId, transaction);
+		String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
+		if (!Util.isValidString(hisNymId))
+			hisNymId = getHisNymId(getHisAccountId(accountId, senderAccountId, recipientAccountId));
 
-			String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
-			if (!Util.isValidString(hisNymId))
-				hisNymId = getHisNymId(getHisAccountId(accountId, senderAccountId, recipientAccountId));
-
-			String trxnNum = null;
-			TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, accountId, transaction));
-			String instrument = null;
-			InstrumentType instrumentType;
-			Side side;
-			Status status;
-			String note;
-			if (trxnType.equals(TransactionType.PENDING)) {
-				instrumentType = InstrumentType.TRANSFER;
-				side = Side.RECEIVED;
-				status = Status.NULL;
-				note = OTAPI.Pending.getNote(serverId, nymId, accountId, transaction);
-			} else if (trxnType.equals(TransactionType.TRANSFER_RECEIPT)) {
-				instrumentType = InstrumentType.TRANSFER;
-				side = Side.SENT;
-				status = Status.CONFIRMED;
-				note = null;// /how to get the note??
-			} else if (trxnType.equals(TransactionType.VOUCHER_RECEIPT)) {
-				instrumentType = InstrumentType.VOUCHER;
-				side = Side.SENT;
-				status = Status.CONFIRMED;
-				note = null;// /how to get the note??
-			} else if (trxnType.equals(TransactionType.CHEQUE_RECEIPT)) {
-				instrumentType = InstrumentType.CHEQUE;
-				side = Side.SENT;
-				status = Status.CONFIRMED;
-				note = null;// /how to get the note??
-			} else {
-				instrumentType = null;
-				side = null;
-				status = null;
-				note = null;
-			}
-
-			Double volume = Module.getDouble(OTAPI.Transaction.getAmount(serverId, nymId, accountId, transaction));
-			String validFrom = null;
-			String validTo = null;
-
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
-					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
+		String trxnNum = null;
+		TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, accountId, transaction));
+		String instrument = null;
+		InstrumentType instrumentType;
+		Side side;
+		Status status;
+		String note;
+		if (trxnType.equals(TransactionType.PENDING)) {
+			instrumentType = InstrumentType.TRANSFER;
+			side = Side.RECEIVED;
+			status = Status.NULL;
+			note = OTAPI.Pending.getNote(serverId, nymId, accountId, transaction);
+		} else if (trxnType.equals(TransactionType.TRANSFER_RECEIPT)) {
+			instrumentType = InstrumentType.TRANSFER;
+			side = Side.SENT;
+			status = Status.CONFIRMED;
+			note = null;// /how to get the note??
+		} else if (trxnType.equals(TransactionType.VOUCHER_RECEIPT)) {
+			instrumentType = InstrumentType.VOUCHER;
+			side = Side.SENT;
+			status = Status.CONFIRMED;
+			note = null;// /how to get the note??
+		} else if (trxnType.equals(TransactionType.CHEQUE_RECEIPT)) {
+			instrumentType = InstrumentType.CHEQUE;
+			side = Side.SENT;
+			status = Status.CONFIRMED;
+			note = null;// /how to get the note??
+		} else {
+			instrumentType = null;
+			side = null;
+			status = null;
+			note = null;
 		}
-		return list;
+
+		String assetId = Module.getAccountAssetId(accountId);
+		Integer value = Module.convertAmountToValue(OTAPI.Transaction.getAmount(serverId, nymId, accountId, transaction));
+		String validFrom = null;
+		String validTo = null;
+
+		return new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+				instrument, instrumentType, trxnType, side, status, assetId, value, note, validFrom, validTo);
 	}
+	
+	public static Transaction getTransactionForOutbox(String serverId, String nymId, String accountId, String ledger, int index) throws OTException {
+		String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
+		if (!Util.isValidString(transaction))
+			Module.error("transaction is empty");
 
-	public static List<Transaction> getListForOutbox(String serverId, String nymId, String accountId, String ledger, int size) throws Exception {
-		List<Transaction> list = new ArrayList<Transaction>();
-		for (int index = 0; index < size; index++) {
-			String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
-			if (!Util.isValidString(transaction))
-				Module.error("transaction is empty");
+		String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, accountId, transaction);
+		String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, accountId, transaction);
+		String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, accountId, transaction);
+		String senderAccountId = OTAPI.Transaction.getSenderAccountId(serverId, nymId, accountId, transaction);
+		String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, accountId, transaction);
+		String recipientAccountId = OTAPI.Transaction.getRecipientAccountId(serverId, nymId, accountId, transaction);
 
-			String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, accountId, transaction);
-			String dateSigned = OTAPI.Transaction.getDateSigned(serverId, nymId, accountId, transaction);
-			String senderNymId = OTAPI.Transaction.getSenderNymId(serverId, nymId, accountId, transaction);
-			String senderAccountId = OTAPI.Transaction.getSenderAccountId(serverId, nymId, accountId, transaction);
-			String recipientNymId = OTAPI.Transaction.getRecipientNymId(serverId, nymId, accountId, transaction);
-			String recipientAccountId = OTAPI.Transaction.getRecipientAccountId(serverId, nymId, accountId, transaction);
+		String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
+		if (!Util.isValidString(hisNymId))
+			hisNymId = getHisNymId(getHisAccountId(accountId, senderAccountId, recipientAccountId));
 
-			String hisNymId = getHisNymId(nymId, senderNymId, recipientNymId);
-			if (!Util.isValidString(hisNymId))
-				hisNymId = getHisNymId(getHisAccountId(accountId, senderAccountId, recipientAccountId));
-
-			String trxnNum = null;
-			TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, accountId, transaction));
-			String instrument = null;
-			InstrumentType instrumentType;
-			Side side;
-			Status status;
-			if (trxnType.equals(TransactionType.PENDING)) {
-				instrumentType = InstrumentType.TRANSFER;
-				side = Side.SENT;
-				status = Status.NULL;
-			} else {
-				instrumentType = null;
-				side = null;
-				status = null;
-			}
-
-			Double volume = 0 - Module.getDouble(OTAPI.Transaction.getAmount(serverId, nymId, accountId, transaction));
-			String note = OTAPI.Pending.getNote(serverId, nymId, accountId, transaction);
-			String validFrom = null;
-			String validTo = null;
-
-			list.add(new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
-					instrument, instrumentType, trxnType, side, status, volume, note, validFrom, validTo));
+		String trxnNum = null;
+		TransactionType trxnType = TransactionType.parse(OTAPI.Transaction.getType(serverId, nymId, accountId, transaction));
+		String instrument = null;
+		InstrumentType instrumentType;
+		Side side;
+		Status status;
+		if (trxnType.equals(TransactionType.PENDING)) {
+			instrumentType = InstrumentType.TRANSFER;
+			side = Side.SENT;
+			status = Status.NULL;
+		} else {
+			instrumentType = null;
+			side = null;
+			status = null;
 		}
-		return list;
+
+		String assetId = Module.getAccountAssetId(accountId);
+		Integer value = 0 - Module.convertAmountToValue(OTAPI.Transaction.getAmount(serverId, nymId, accountId, transaction));
+		String note = OTAPI.Pending.getNote(serverId, nymId, accountId, transaction);
+		String validFrom = null;
+		String validTo = null;
+
+		return new Transaction(refNum, dateSigned, senderNymId, senderAccountId, recipientNymId, recipientAccountId, hisNymId, trxnNum,
+				instrument, instrumentType, trxnType, side, status, assetId, value, note, validFrom, validTo);
 	}
 
 	public static void showH(List<Transaction> list) {
 		Collections.sort(list);
 		for (Transaction transaction : list) {
 			Module.print(String.format(
-					"%18s : %-8s : %-8s : %9.2f : %2s : %s %s",
+					"%18s : %-8s : %-8s : %9s : %2s : %-15s %s",
 					// %5s | %5s |
 					// transaction.refNum, transaction.trxnNum,
-					UTC.timeToString(transaction.dateSigned), transaction.instrumentType, transaction.side, transaction.volume, transaction.status,
+					UTC.timeToString(transaction.dateSigned), transaction.instrumentType, transaction.side, 
+					Module.convertValueToFormat(transaction.assetId, transaction.value), transaction.status,
 					Util.crop(ContactModule.getContactName(transaction.hisNymId), 15),
 					(Util.isValidString(transaction.note) ? String.format(": %s", transaction.note) : "")));
 		}
@@ -364,8 +355,9 @@ public class Transaction implements Comparable<Transaction> {
 		Collections.sort(list);
 		int i = 0;
 		for (Transaction transaction : list) {
-			Module.print(String.format("%3d: %18s | %-8s | %-8s | %9.2f | %2s | %s", ++i, UTC.timeToString(transaction.dateSigned),
-					transaction.instrumentType, transaction.side, transaction.volume, transaction.status,
+			Module.print(String.format("%3d: %18s | %-8s | %-8s | %9s | %2s | %s", ++i, 
+					UTC.timeToString(transaction.dateSigned), transaction.instrumentType, transaction.side,
+					Module.convertValueToFormat(transaction.assetId, transaction.value), transaction.status,
 					Util.crop(ContactModule.getContactName(transaction.hisNymId), 15)));
 		}
 	}
@@ -380,7 +372,7 @@ public class Transaction implements Comparable<Transaction> {
 		Module.print(Util.repeat("-", 13));
 		Module.print(String.format("%12s: %s", "InstrType", instrumentType));
 		Module.print(String.format("%12s: %s", "Date", UTC.timeToString(dateSigned)));
-		Module.print(String.format("%12s: %.2f", "Volume", Math.abs(volume)));
+		Module.print(String.format("%12s: %s", "Volume", Module.convertValueToFormat(assetId, Math.abs(value))));
 		// Module.print(String.format("%12s: %s", "RefNum", refNum));
 		// Module.print(String.format("%12s: %s", "TrxnType", trxnType));
 		// Module.print(String.format("%12s: %s", "TrxnNum", trxnNum));

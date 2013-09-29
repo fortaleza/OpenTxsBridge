@@ -2,6 +2,7 @@ package eu.opentxs.bridge.core.commands;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -22,11 +23,12 @@ import eu.opentxs.bridge.Text;
 import eu.opentxs.bridge.Util;
 import eu.opentxs.bridge.core.Console.ConsoleApplication;
 import eu.opentxs.bridge.core.dto.Contact;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 
 public abstract class Commands {
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		// Test1().execute(true, 8.6726f, 198);
 		String s = "last living souls";
 		@SuppressWarnings("unused")
@@ -110,11 +112,11 @@ public abstract class Commands {
 		System.out.println(s);
 	}
 
-	protected static void error(String message) throws Exception {
-		throw new Exception(message);
+	protected static void error(String message) throws OTException {
+		throw new OTException(message);
 	}
 
-	protected static void error(Text text) throws Exception {
+	protected static void error(Text text) throws OTException {
 		error(text.toString());
 	}
 
@@ -172,19 +174,19 @@ public abstract class Commands {
 		return ids;
 	}
 
-	protected static Boolean readBooleanFromInput(String prompt) throws Exception {
+	protected static Boolean readBooleanFromInput(String prompt) {
 		print(String.format("%s (%s/%s)", prompt, "Y", "N"));
 		String input = ConsoleApplication.readLineFromConsole();
 		return (Util.isValidString(input) && (input.equalsIgnoreCase("Y")));
 	}
 
-	protected static String readStringFromInput(String prompt) throws Exception {
+	protected static String readStringFromInput(String prompt) {
 		print(String.format("%s:", prompt));
 		String input = ConsoleApplication.readLineFromConsole();
 		return input;
 	}
 
-	protected static String readStringFromFile(Text folder, Extension extension) throws Exception {
+	protected static String readStringFromFile(Text folder, Extension extension) {
 		Path path = null;
 		while (path == null) {
 			path = openFileChooser(folder, extension, Text.OPEN_FILE_TITLE, Text.OPEN_FILE);
@@ -196,14 +198,19 @@ public abstract class Commands {
 				path = null;
 			}
 		}
-		byte[] encoded = Files.readAllBytes(path);
+		byte[] encoded = null;
+		try {//fatal
+			encoded = Files.readAllBytes(path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		Charset encoding = Charset.defaultCharset();
 		String content = encoding.decode(ByteBuffer.wrap(encoded)).toString();
 		content = content.replaceAll("\\r", "");
 		return content;
 	}
 
-	protected static boolean writeStringToFile(Text folder, Extension extension, String content) throws Exception {
+	protected static boolean writeStringToFile(Text folder, Extension extension, String content) {
 		Path path = null;
 		while (path == null) {
 			path = openFileChooser(folder, extension, Text.SAVE_FILE_TITLE, Text.SAVE_FILE);
@@ -217,9 +224,14 @@ public abstract class Commands {
 			}
 		}
 		String fileName = path.toString();
-		FileWriter fw = new FileWriter(fileName);
-		fw.write(content);
-		fw.close();
+		FileWriter fw;
+		try {//fatal
+			fw = new FileWriter(fileName);
+			fw.write(content);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		print(String.format("%s:", Text.FILE_SAVED_AS));
 		print(fileName);
 		return true;
@@ -275,7 +287,7 @@ public abstract class Commands {
 
 	public static class Index extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
 
@@ -297,7 +309,7 @@ public abstract class Commands {
 
 	public static class Help extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
 
@@ -319,7 +331,7 @@ public abstract class Commands {
 
 	public static class Quit extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
 

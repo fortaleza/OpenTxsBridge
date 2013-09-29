@@ -2,6 +2,7 @@ package eu.opentxs.bridge.core.commands.act;
 
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class MetaCommands extends Commands {
@@ -12,7 +13,7 @@ public class MetaCommands extends Commands {
 
 	public static class Verbose extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Module.toggleVerbose();
 		}
 	}

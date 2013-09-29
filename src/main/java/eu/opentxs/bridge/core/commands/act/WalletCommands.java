@@ -5,6 +5,7 @@ import java.util.List;
 import eu.opentxs.bridge.Util;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class WalletCommands extends Commands {
@@ -30,11 +31,11 @@ public class WalletCommands extends Commands {
 			};
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String walletId = getString(0);
 			execute(walletId);
 		}
-		public static void execute(String walletId) throws Exception {
+		public static void execute(String walletId) throws OTException {
 			Module.createWallet(walletId);
 			Module.loadAndShowWallet(walletId);
 		}
@@ -43,7 +44,7 @@ public class WalletCommands extends Commands {
 	public static class SetWallet extends Command {
 		private List<String> ids;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			ids = getWalletIds();
 			if (ids.size() == 0)
 				error("no wallets found");
@@ -68,21 +69,21 @@ public class WalletCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String walletId = new PlainExtractor().eval(0, ids);
 			execute(walletId);
 		}
-		public static void execute(String walletId) throws Exception {
+		public static void execute(String walletId) throws OTException {
 			Module.loadAndShowWallet(walletId);
 		}
 	}
 
 	public static class ShowWallet extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
-		public static void execute() throws Exception {
+		public static void execute() throws OTException {
 			Module.showWallet();
 		}
 	}

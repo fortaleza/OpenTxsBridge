@@ -13,6 +13,7 @@ import eu.opentxs.bridge.core.commands.act.ContactCommands.CreateContact;
 import eu.opentxs.bridge.core.commands.act.ContactCommands.CreateContactAccount;
 import eu.opentxs.bridge.core.dto.Contact;
 import eu.opentxs.bridge.core.dto.ContactAccount;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 import eu.opentxs.bridge.core.modules.act.AccountModule;
 import eu.opentxs.bridge.core.modules.act.AssetModule;
@@ -34,6 +35,7 @@ public class BusinessCommands extends Commands {
 		addToCommands(new ImportCashToAccount(), Category.BUSINESS_EXTRA, Sophistication.MINI);
 
 		addToCommands(new WriteVoucher(), Category.BUSINESS, Sophistication.SIMPLE);
+		addToCommands(new CancelVoucher(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new ExecuteVoucher(), Category.BUSINESS_EXTRA, Sophistication.SIMPLE);
 
 		addToCommands(new WriteCheque(), Category.BUSINESS, Sophistication.ADVANCED);
@@ -46,11 +48,90 @@ public class BusinessCommands extends Commands {
 		addToCommands(new ExecuteInvoice(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 		addToCommands(new DiscardInvoice(), Category.BUSINESS_EXTRA, Sophistication.ADVANCED);
 	}
+	
+	protected static abstract class BusinessCommand extends Command {
+		protected static void verifyContact(String hisNymId) throws OTException {
+			if (!Util.isValidString(hisNymId))
+				return;
+			if (!ContactModule.verifyContact(hisNymId)) {
+				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
+					String name = readStringFromInput("Enter nym name");
+					if (Util.isValidString(name))
+						CreateContact.execute(hisNymId, name);
+				}
+			}
+		}
+		protected static void checkHisNymId(String accountId, String hisNymId) throws OTException {
+			if (!Util.isValidString(hisNymId))
+				return;
+			String serverId = Module.getAccountServerId(accountId);
+			String nymId = Module.getAccountNymId(accountId);
+			NymModule nymModule = new NymModule(serverId, nymId);
+			if (!nymModule.checkHisNymId(hisNymId))
+				error("Unable to confirm that hisNymId exists");
+		}
+		protected static String getCash() throws OTException {
+			String cash = readStringFromInput("Paste cash here");
+			if (Util.isValidString(cash) && isValidCashContract(cash)) {
+				cash = Interpreter.restoreNewLines(cash);
+			} else {
+				print("This does not look like cash");
+				if (!readBooleanFromInput("Would you like to open it from a file?"))
+					error("No vaild cash was supplied");
+				cash = readStringFromFile(Text.FOLDER_CASH, Extension.CONTRACT);
+				if (!Util.isValidString(cash))
+					error("No vaild cash was supplied");
+			}
+			return cash;
+		}
+		protected static String getVoucher() throws OTException {
+			String voucher = readStringFromInput("Paste a voucher here");
+			if (Util.isValidString(voucher) && isValidVoucherContract(voucher)) {
+				voucher = Interpreter.restoreNewLines(voucher);
+			} else {
+				print("This does not look like a voucher");
+				if (!readBooleanFromInput("Would you like to open it from a file?"))
+					error("No vaild voucher was supplied");
+				voucher = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
+				if (!Util.isValidString(voucher))
+					error("No vaild voucher was supplied");
+			}
+			return voucher;
+		}
+		protected static String getCheque() throws OTException {
+			String cheque = readStringFromInput("Paste a cheque here");
+			if (Util.isValidString(cheque) && isValidChequeContract(cheque)) {
+				cheque = Interpreter.restoreNewLines(cheque);
+			} else {
+				print("This does not look like a cheque");
+				if (!readBooleanFromInput("Would you like to open it from a file?"))
+					error("No vaild cheque was supplied");
+				cheque = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
+				if (!Util.isValidString(cheque))
+					error("No vaild cheque was supplied");
+			}
+			return cheque;
+		}
+		protected static String getInvoice() throws OTException {
+			String invoice = readStringFromInput("Paste a invoice here");
+			if (Util.isValidString(invoice) && isValidInvoiceContract(invoice)) {
+				invoice = Interpreter.restoreNewLines(invoice);
+			} else {
+				print("This does not look like a invoice");
+				if (!readBooleanFromInput("Would you like to open it from a file?"))
+					error("No vaild invoice was supplied");
+				invoice = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
+				if (!Util.isValidString(invoice))
+					error("No vaild invoice was supplied");
+			}
+			return invoice;
+		}
+	}
 
-	public static class Transfer extends Command {
+	public static class Transfer extends BusinessCommand  {
 		private List<ContactAccount> contactAccounts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -81,7 +162,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			String hisAccountId = (new Extractor<ContactAccount>() {
 				@Override
@@ -99,17 +180,27 @@ public class BusinessCommands extends Commands {
 		 * @param volume
 		 * @param hisAccountId
 		 * @param note
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, Double volume, String hisAccountId, String note) throws Exception {
+		public static void execute(String accountId, Double volume, String hisAccountId, String note) throws OTException {
 			if (hisAccountId.equals(accountId))
 				error("Your account and his account are the same");
 			if (!ContactModule.verifyContactAccount(hisAccountId)) {
 				if (readBooleanFromInput("Would you like to add this account to your contacts?")) {
 					String hisNymId = readStringFromInput("Enter nym id");
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-					CreateContactAccount.execute(hisAccountId, DataModel.getMyAssetId(), hisNymId, DataModel.getMyServerId());
+					if (Util.isValidString(hisNymId)) {
+						String serverId = Module.getAccountServerId(accountId);
+						String assetId = Module.getAccountAssetId(accountId);
+						if (ContactModule.verifyContact(hisNymId)) {
+							CreateContactAccount.execute(hisAccountId, assetId, hisNymId, serverId);
+						} else {
+							String name = readStringFromInput("Enter nym name");
+							if (Util.isValidString(name)) {
+								CreateContact.execute(hisNymId, name);
+								CreateContactAccount.execute(hisAccountId, assetId, hisNymId, serverId);
+							}
+						}
+					}
 				}
 			}
 			AccountModule.checkAvailableFunds(accountId, volume);
@@ -122,9 +213,9 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class MoveAccountToPurse extends Command {
+	public static class MoveAccountToPurse extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -136,7 +227,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			execute(DataModel.getMyAccountId(), volume);
 		}
@@ -145,9 +236,9 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param volume
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, Double volume) throws Exception {
+		public static void execute(String accountId, Double volume) throws OTException {
 			AccountModule.checkAvailableFunds(accountId, volume);
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			accountModule.moveAccountToPurse(volume);
@@ -156,10 +247,10 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class MovePurseToAccount extends Command {
+	public static class MovePurseToAccount extends BusinessCommand {
 		private int purseSize;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 			AssetModule assetModule = new AssetModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
@@ -173,7 +264,7 @@ public class BusinessCommands extends Commands {
 			if (index == 0) {
 				try {
 					AccountCommands.ShowPurse.execute(DataModel.getMyAccountId());
-				} catch (Exception e) {
+				} catch (OTException e) {
 				}
 			}
 			return true;
@@ -191,7 +282,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			List<Integer> indices = getIntegerList(0, true);
 			execute(DataModel.getMyAccountId(), indices);
 		}
@@ -200,9 +291,9 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param indices
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, List<Integer> indices) throws Exception {
+		public static void execute(String accountId, List<Integer> indices) throws OTException {
 			String serverId = Module.getAccountServerId(accountId);
 			String nymId = Module.getAccountNymId(accountId);
 			String assetId = Module.getAccountAssetId(accountId);
@@ -214,58 +305,11 @@ public class BusinessCommands extends Commands {
 			AccountCommands.ShowAccount.execute(accountId);
 		}
 	}
-
-	public static class ImportCashToAccount extends Command {
-		@Override
-		public boolean introduceArgument(int index) {
-			return false;
-		}
-		@Override
-		public void sanity() throws Exception {
-			if (!Util.isValidString(DataModel.getMyAccountId()))
-				error("You need to set your account first");
-		}
-		@Override
-		protected void action(String[] args) throws Exception {
-			String cash = readStringFromInput("Paste cash here");
-			if (Util.isValidString(cash) && isValidCashContract(cash)) {
-				cash = Interpreter.restoreNewLines(cash);
-			} else {
-				print("This does not look like cash");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild cash was supplied");
-				cash = readStringFromFile(Text.FOLDER_CASH, Extension.CONTRACT);
-				if (!Util.isValidString(cash))
-					error("No vaild cash was supplied");
-			}
-			execute(DataModel.getMyAccountId(), cash);
-		}
-		/**
-		 * Import money as cash and deposit it into an account
-		 * 
-		 * @param accountId
-		 * @param cash
-		 * @throws Exception
-		 */
-		public static void execute(String accountId, String cash) throws Exception {
-			String serverId = Module.getAccountServerId(accountId);
-			String nymId = Module.getAccountNymId(accountId);
-			String assetId = Module.getAccountAssetId(accountId);
-			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
-			assetModule.showPurse(cash);
-			if (readBooleanFromInput("Are you sure you want to import this cash?")) {
-				AccountModule accountModule = AccountModule.getInstance(accountId);
-				accountModule.verifyCash(cash);
-				accountModule.importCashToAccount(cash);
-			}
-			AccountCommands.ShowAccount.execute(accountId);
-		}
-	}
-
-	public static class ExportAccountToCash extends Command {
+	
+	public static class ExportAccountToCash extends BusinessCommand {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -296,7 +340,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			String hisNymId = (new Extractor<Contact>() {
 				@Override
@@ -312,19 +356,15 @@ public class BusinessCommands extends Commands {
 		 * @param accountId
 		 * @param volume
 		 * @param hisNymId
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, Double volume, String hisNymId) throws Exception {
+		public static void execute(String accountId, Double volume, String hisNymId) throws OTException {
 			// /
 			if (!Util.isValidString(hisNymId))
 				error(String.format("%s: %s", Text.FEATURE_DISABLED_SERVER_BUG, "hisNymId cannot be empty"));
 			// /
-			if (!ContactModule.verifyContact(hisNymId)) {
-				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-				}
-			}
+			checkHisNymId(accountId, hisNymId);
+			verifyContact(hisNymId);
 			AccountModule.checkAvailableFunds(accountId, volume);
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			String cash = accountModule.exportAccountToCash(volume, hisNymId);
@@ -336,11 +376,48 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class ExportPurseToCash extends Command {
+	public static class ImportCashToAccount extends BusinessCommand {
+		@Override
+		public boolean introduceArgument(int index) {
+			return false;
+		}
+		@Override
+		public void sanity() throws OTException {
+			if (!Util.isValidString(DataModel.getMyAccountId()))
+				error("You need to set your account first");
+		}
+		@Override
+		protected void action(String[] args) throws OTException {
+			String cash = getCash();
+			execute(DataModel.getMyAccountId(), cash);
+		}
+		/**
+		 * Import money as cash and deposit it into an account
+		 * 
+		 * @param accountId
+		 * @param cash
+		 * @throws OTException
+		 */
+		public static void execute(String accountId, String cash) throws OTException {
+			String serverId = Module.getAccountServerId(accountId);
+			String nymId = Module.getAccountNymId(accountId);
+			String assetId = Module.getAccountAssetId(accountId);
+			AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
+			assetModule.showPurse(cash);
+			if (readBooleanFromInput("Are you sure you want to import this cash?")) {
+				AccountModule accountModule = AccountModule.getInstance(accountId);
+				accountModule.verifyCash(cash);
+				accountModule.importCashToAccount(cash);
+			}
+			AccountCommands.ShowAccount.execute(accountId);
+		}
+	}
+
+	public static class ExportPurseToCash extends BusinessCommand {
 		private int purseSize;
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 			AssetModule assetModule = new AssetModule(DataModel.getMyServerId(), DataModel.getMyNymId(), DataModel.getMyAssetId());
@@ -354,7 +431,7 @@ public class BusinessCommands extends Commands {
 			if (index == 0) {
 				try {
 					AccountCommands.ShowPurse.execute(DataModel.getMyAccountId());
-				} catch (Exception e) {
+				} catch (OTException e) {
 				}
 			} else if (index == 1) {
 				contacts = Contact.getList();
@@ -387,7 +464,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			List<Integer> indices = getIntegerList(0, true);
 			String hisNymId = (new Extractor<Contact>() {
 				@Override
@@ -403,19 +480,15 @@ public class BusinessCommands extends Commands {
 		 * @param accountId
 		 * @param indices
 		 * @param hisNymId
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, List<Integer> indices, String hisNymId) throws Exception {
+		public static void execute(String accountId, List<Integer> indices, String hisNymId) throws OTException {
 			// /
 			if (!Util.isValidString(hisNymId))
 				error(String.format("%s: %s", Text.FEATURE_DISABLED_SERVER_BUG, "hisNymId cannot be empty"));
 			// /
-			if (!ContactModule.verifyContact(hisNymId)) {
-				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-				}
-			}
+			checkHisNymId(accountId, hisNymId);
+			verifyContact(hisNymId);
 			String serverId = Module.getAccountServerId(accountId);
 			String nymId = Module.getAccountNymId(accountId);
 			String assetId = Module.getAccountAssetId(accountId);
@@ -429,29 +502,19 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class ImportCashToPurse extends Command {
+	public static class ImportCashToPurse extends BusinessCommand {
 		@Override
 		public boolean introduceArgument(int index) {
 			return false;
 		}
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String cash = readStringFromInput("Paste cash here");
-			if (Util.isValidString(cash) && isValidCashContract(cash)) {
-				cash = Interpreter.restoreNewLines(cash);
-			} else {
-				print("This does not look like cash");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild cash was supplied");
-				cash = readStringFromFile(Text.FOLDER_CASH, Extension.CONTRACT);
-				if (!Util.isValidString(cash))
-					error("No vaild cash was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String cash = getCash();
 			execute(DataModel.getMyAccountId(), cash);
 		}
 		/**
@@ -459,9 +522,9 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param cash
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String cash) throws Exception {
+		public static void execute(String accountId, String cash) throws OTException {
 			String serverId = Module.getAccountServerId(accountId);
 			String nymId = Module.getAccountNymId(accountId);
 			String assetId = AssetModule.getCashAssetId(cash);
@@ -475,10 +538,10 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class WriteVoucher extends Command {
+	public static class WriteVoucher extends BusinessCommand {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -509,7 +572,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			String hisNymId = (new Extractor<Contact>() {
 				@Override
@@ -527,29 +590,25 @@ public class BusinessCommands extends Commands {
 		 * @param volume
 		 * @param hisNymId
 		 * @param note
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, Double volume, String hisNymId, String note) throws Exception {
-			if (!ContactModule.verifyContact(hisNymId)) {
-				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-				}
-			}
+		public static void execute(String accountId, Double volume, String hisNymId, String note) throws OTException {
+			checkHisNymId(accountId, hisNymId);
+			verifyContact(hisNymId);
 			AccountModule.checkAvailableFunds(accountId, volume);
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			String voucher = accountModule.writeVoucher(volume, hisNymId, note);
 			if (readBooleanFromInput("Would you like to send the voucher to the recipient?"))
 				accountModule.sendVoucher(voucher, hisNymId);
-			else if (readBooleanFromInput("Would you like to save the voucher to a file?"))
+			if (readBooleanFromInput("Would you like to save the voucher to a file?"))
 				writeStringToFile(Text.FOLDER_CHEQUES, Extension.CONTRACT, voucher);
 			AccountCommands.ShowAccount.execute(accountId);
 		}
 	}
-
-	public static class ExecuteVoucher extends Command {
+	
+	public static class CancelVoucher extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -558,18 +617,37 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String voucher = readStringFromInput("Paste a voucher here");
-			if (Util.isValidString(voucher) && isValidVoucherContract(voucher)) {
-				voucher = Interpreter.restoreNewLines(voucher);
-			} else {
-				print("This does not look like a voucher");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild voucher was supplied");
-				voucher = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(voucher))
-					error("No vaild voucher was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String voucher = getVoucher();
+			execute(DataModel.getMyAccountId(), voucher);
+		}
+		/**
+		 * Cancel a voucher so that the recipient can no longer deposit it
+		 * 
+		 * @param accountId
+		 * @param voucher
+		 * @throws OTException
+		 */
+		public static void execute(String accountId, String voucher) throws OTException {
+			AccountModule accountModule = AccountModule.getInstance(accountId);
+			if (readBooleanFromInput("Are you sure you want to cancel this voucher?"))
+				accountModule.cancelVoucher(voucher);
+		}
+	}
+
+	public static class ExecuteVoucher extends BusinessCommand {
+		@Override
+		public void sanity() throws OTException {
+			if (!Util.isValidString(DataModel.getMyAccountId()))
+				error("You need to set your account first");
+		}
+		@Override
+		public boolean introduceArgument(int index) {
+			return false;
+		}
+		@Override
+		protected void action(String[] args) throws OTException {
+			String voucher = getVoucher();
 			execute(DataModel.getMyAccountId(), voucher);
 		}
 		/**
@@ -577,23 +655,32 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param voucher
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String voucher) throws Exception {
+		public static void execute(String accountId, String voucher) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
-			Double volume = accountModule.verifyVoucher(voucher);
-			print(String.format("Voucher value: %.2f", volume));
+			accountModule.verifyVoucher(voucher);
 			if (readBooleanFromInput("Are you sure you want to deposit this voucher?")) {
 				accountModule.executeVoucher(voucher);
 				AccountCommands.ShowAccount.execute(accountId);
+				String hisNymId = ContactModule.extractContactFromInstrument(voucher);
+				if (Util.isValidString(hisNymId)) {
+					if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
+						String name = readStringFromInput("Enter nym name");
+						if (Util.isValidString(name)) {
+							CreateContact.execute(hisNymId, name);
+							ContactModule.extractContactFromInstrument(voucher);/** doing it again to add hisAccountId */
+						}
+					}
+				}
 			}
 		}
 	}
 
-	public static class WriteCheque extends Command {
+	public static class WriteCheque extends BusinessCommand {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -630,7 +717,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			String hisNymId = (new Extractor<Contact>() {
 				@Override
@@ -650,16 +737,12 @@ public class BusinessCommands extends Commands {
 		 * @param hisNymId
 		 * @param note
 		 * @param expiry
-		 * @throws Exception
+		 * @throws OTException
 		 */
 		public static void execute(String accountId, Double volume, String hisNymId, String note, UTC expiry)
-				throws Exception {
-			if (!ContactModule.verifyContact(hisNymId)) {
-				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-				}
-			}
+				throws OTException {
+			checkHisNymId(accountId, hisNymId);
+			verifyContact(hisNymId);
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			String cheque = accountModule.writeCheque(volume, hisNymId, note, expiry);
 			if (readBooleanFromInput("Would you like to send the cheque to the recipient?"))
@@ -669,9 +752,9 @@ public class BusinessCommands extends Commands {
 		}
 	}
 	
-	public static class CancelCheque extends Command {
+	public static class CancelCheque extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -680,18 +763,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String cheque = readStringFromInput("Paste a cheque here");
-			if (Util.isValidString(cheque) && isValidChequeContract(cheque)) {
-				cheque = Interpreter.restoreNewLines(cheque);
-			} else {
-				print("This does not look like a cheque");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild cheque was supplied");
-				cheque = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(cheque))
-					error("No vaild cheque was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String cheque = getCheque();
 			execute(DataModel.getMyAccountId(), cheque);
 		}
 		/**
@@ -699,18 +772,18 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param cheque
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String cheque) throws Exception {
+		public static void execute(String accountId, String cheque) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			if (readBooleanFromInput("Are you sure you want to cancel this cheque?"))
 				accountModule.cancelCheque(cheque);
 		}
 	}
-
-	public static class ExcecuteCheque extends Command {
+	
+	public static class ExcecuteCheque extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -719,18 +792,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String cheque = readStringFromInput("Paste a cheque here");
-			if (Util.isValidString(cheque) && isValidChequeContract(cheque)) {
-				cheque = Interpreter.restoreNewLines(cheque);
-			} else {
-				print("This does not look like a cheque");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild cheque was supplied");
-				cheque = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(cheque))
-					error("No vaild cheque was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String cheque = getCheque();
 			execute(DataModel.getMyAccountId(), cheque);
 		}
 		/**
@@ -738,22 +801,31 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param cheque
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String cheque) throws Exception {
+		public static void execute(String accountId, String cheque) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
-			Double volume = accountModule.verifyCheque(cheque);
-			print(String.format("Cheque value: %.2f", volume));
+			accountModule.verifyCheque(cheque);
 			if (readBooleanFromInput("Are you sure you want to deposit this cheque?")) {
 				accountModule.executeCheque(cheque);
 				AccountCommands.ShowAccount.execute(accountId);
+				String hisNymId = ContactModule.extractContactFromInstrument(cheque);
+				if (Util.isValidString(hisNymId)) {
+					if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
+						String name = readStringFromInput("Enter nym name");
+						if (Util.isValidString(name)) {
+							CreateContact.execute(hisNymId, name);
+							ContactModule.extractContactFromInstrument(cheque);/** doing it again to add hisAccountId */
+						}
+					}
+				}
 			}
 		}
 	}
 
-	public static class DiscardCheque extends Command {
+	public static class DiscardCheque extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -762,18 +834,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String cheque = readStringFromInput("Paste a cheque here");
-			if (Util.isValidString(cheque) && isValidChequeContract(cheque)) {
-				cheque = Interpreter.restoreNewLines(cheque);
-			} else {
-				print("This does not look like a cheque");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild cheque was supplied");
-				cheque = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(cheque))
-					error("No vaild cheque was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String cheque = getCheque();
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), cheque);
 		}
 		/**
@@ -782,19 +844,19 @@ public class BusinessCommands extends Commands {
 		 * @param serverId
 		 * @param nymId
 		 * @param cheque
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String serverId, String nymId, String cheque) throws Exception {
+		public static void execute(String serverId, String nymId, String cheque) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			if (readBooleanFromInput("Are you sure you want to discard this cheque?"))
 				nymModule.discardCheque(cheque);
 		}
 	}
 
-	public static class WriteInvoice extends Command {
+	public static class WriteInvoice extends BusinessCommand {
 		private List<Contact> contacts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -825,7 +887,7 @@ public class BusinessCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Double volume = getDouble(0);
 			String hisNymId = (new Extractor<Contact>() {
 				@Override
@@ -843,15 +905,11 @@ public class BusinessCommands extends Commands {
 		 * @param volume
 		 * @param hisNymId
 		 * @param note
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, Double volume, String hisNymId, String note) throws Exception {
-			if (!ContactModule.verifyContact(hisNymId)) {
-				if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
-					String name = readStringFromInput("Enter nym name");
-					CreateContact.execute(hisNymId, name);
-				}
-			}
+		public static void execute(String accountId, Double volume, String hisNymId, String note) throws OTException {
+			checkHisNymId(accountId, hisNymId);
+			verifyContact(hisNymId);
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			String invoice = accountModule.writeInvoice(volume, hisNymId, note);
 			if (readBooleanFromInput("Would you like to send the invoice to the recipient?"))
@@ -861,9 +919,9 @@ public class BusinessCommands extends Commands {
 		}
 	}
 
-	public static class CancelInvoice extends Command {
+	public static class CancelInvoice extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -872,18 +930,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String invoice = readStringFromInput("Paste a invoice here");
-			if (Util.isValidString(invoice) && isValidInvoiceContract(invoice)) {
-				invoice = Interpreter.restoreNewLines(invoice);
-			} else {
-				print("This does not look like a invoice");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild invoice was supplied");
-				invoice = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(invoice))
-					error("No vaild invoice was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String invoice = getInvoice();
 			execute(DataModel.getMyAccountId(), invoice);
 		}
 		/**
@@ -891,18 +939,18 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param invoice
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String invoice) throws Exception {
+		public static void execute(String accountId, String invoice) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
 			if (readBooleanFromInput("Are you sure you want to cancel this invoice?"))
 				accountModule.cancelInvoice(invoice);
 		}
 	}
 
-	public static class ExecuteInvoice extends Command {
+	public static class ExecuteInvoice extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -911,18 +959,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String invoice = readStringFromInput("Paste a invoice here");
-			if (Util.isValidString(invoice) && isValidInvoiceContract(invoice)) {
-				invoice = Interpreter.restoreNewLines(invoice);
-			} else {
-				print("This does not look like a invoice");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild invoice was supplied");
-				invoice = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(invoice))
-					error("No vaild invoice was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String invoice = getInvoice();
 			execute(DataModel.getMyAccountId(), invoice);
 		}
 		/**
@@ -930,22 +968,31 @@ public class BusinessCommands extends Commands {
 		 * 
 		 * @param accountId
 		 * @param invoice
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String accountId, String invoice) throws Exception {
+		public static void execute(String accountId, String invoice) throws OTException {
 			AccountModule accountModule = AccountModule.getInstance(accountId);
-			Double volume = accountModule.verifyInvoice(invoice);
-			print(String.format("Invoice value: %.2f", volume));
+			accountModule.verifyInvoice(invoice);
 			if (readBooleanFromInput("Are you sure you want to execute this invoice?")) {
 				accountModule.executeInvoice(invoice);
 				AccountCommands.ShowAccount.execute(accountId);
+				String hisNymId = ContactModule.extractContactFromInstrument(invoice);
+				if (Util.isValidString(hisNymId)) {
+					if (readBooleanFromInput("Would you like to add this nym to your contacts?")) {
+						String name = readStringFromInput("Enter nym name");
+						if (Util.isValidString(name)) {
+							CreateContact.execute(hisNymId, name);
+							ContactModule.extractContactFromInstrument(invoice);/** doing it again to add hisAccountId */
+						}
+					}
+				}
 			}
 		}
 	}
 	
-	public static class DiscardInvoice extends Command {
+	public static class DiscardInvoice extends BusinessCommand {
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			if (!Util.isValidString(DataModel.getMyAccountId()))
 				error("You need to set your account first");
 		}
@@ -954,18 +1001,8 @@ public class BusinessCommands extends Commands {
 			return false;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
-			String invoice = readStringFromInput("Paste a invoice here");
-			if (Util.isValidString(invoice) && isValidInvoiceContract(invoice)) {
-				invoice = Interpreter.restoreNewLines(invoice);
-			} else {
-				print("This does not look like a invoice");
-				if (!readBooleanFromInput("Would you like to open it from a file?"))
-					error("No vaild invoice was supplied");
-				invoice = readStringFromFile(Text.FOLDER_CHEQUES, Extension.CONTRACT);
-				if (!Util.isValidString(invoice))
-					error("No vaild invoice was supplied");
-			}
+		protected void action(String[] args) throws OTException {
+			String invoice = getInvoice();
 			execute(DataModel.getMyServerId(), DataModel.getMyNymId(), invoice);
 		}
 		/**
@@ -974,9 +1011,9 @@ public class BusinessCommands extends Commands {
 		 * @param serverId
 		 * @param nymId
 		 * @param invoice
-		 * @throws Exception
+		 * @throws OTException
 		 */
-		public static void execute(String serverId, String nymId, String invoice) throws Exception {
+		public static void execute(String serverId, String nymId, String invoice) throws OTException {
 			NymModule nymModule = new NymModule(serverId, nymId);
 			if (readBooleanFromInput("Are you sure you want to discard this invoice?"))
 				nymModule.discardInvoice(invoice);

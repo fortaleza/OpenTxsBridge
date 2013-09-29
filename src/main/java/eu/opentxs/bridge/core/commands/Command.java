@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.ApplProperties;
-import eu.opentxs.bridge.Localizer;
 import eu.opentxs.bridge.Text;
+import eu.opentxs.bridge.Localizer;
 import eu.opentxs.bridge.UTC;
 import eu.opentxs.bridge.Util;
+import eu.opentxs.bridge.core.exceptions.OTException;
+import eu.opentxs.bridge.core.exceptions.OTUserException;
 import eu.opentxs.bridge.core.modules.Module;
 
 public abstract class Command implements Comparable<Command> {
@@ -211,10 +213,10 @@ public abstract class Command implements Comparable<Command> {
 
 	protected abstract class Extractor<T> {
 		public abstract String get(T t);
-		public String eval(int index, List<T> list) throws Exception {
+		public String eval(int index, List<T> list) throws OTException {
 			return eval(index, list, null);
 		}
-		public String eval(int index, List<T> list, String alt) throws Exception {
+		public String eval(int index, List<T> list, String alt) throws OTException {
 			String s = args[index];
 			if (!isValidId(s)) {
 				if (list.size() == 1) {
@@ -270,14 +272,14 @@ public abstract class Command implements Comparable<Command> {
 	public Commands.Category category;
 	public Commands.Sophistication sophistication;
 
-	protected void sanity() throws Exception {
+	protected void sanity() throws OTException {
 	}
 
 	public Boolean sanityCheck() {
 		Boolean retval = Boolean.TRUE;
 		try {
 			sanity();
-		} catch (Exception e) {
+		} catch (OTException e) {
 			System.err.println(e.getMessage());
 			retval = Boolean.FALSE;
 		}
@@ -292,14 +294,14 @@ public abstract class Command implements Comparable<Command> {
 		return null;
 	}
 
-	protected abstract void action(String[] args) throws Exception;
+	protected abstract void action(String[] args) throws OTException;
 
 	public Boolean actionResult(String[] args) {
 		this.args = args;
 		Boolean retval = Boolean.TRUE;
 		try {
 			action(args);
-		} catch (Exception e) {
+		} catch (OTException e) {
 			System.err.println(e.getMessage());
 			retval = Boolean.FALSE;
 		}
@@ -351,7 +353,7 @@ public abstract class Command implements Comparable<Command> {
 		return local.getString(getName() + ".pseudo");
 	}
 
-	protected Boolean getBoolean(int index) throws Exception {
+	protected Boolean getBoolean(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		if (args[index].equals("t") || args[index].equals("true") || args[index].equals("1"))
@@ -359,27 +361,27 @@ public abstract class Command implements Comparable<Command> {
 		return Boolean.FALSE;
 	}
 
-	protected String getString(int index, boolean canBeEmpty) throws Exception {
+	protected String getString(int index, boolean canBeEmpty) throws OTException {
 		if (canBeEmpty)
 			return new String(args[index]);
 		return getString(index);
 	}
 
-	protected String getString(int index, String alt) throws Exception {
+	protected String getString(int index, String alt) throws OTException {
 		return (!Util.isValidString(args[index]) ? alt : getString(index));
 	}
 
-	protected String getString(int index) throws Exception {
+	protected String getString(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		return new String(args[index]);
 	}
 
-	protected Integer getInteger(int index, Integer alt) throws Exception {
+	protected Integer getInteger(int index, Integer alt) throws OTException {
 		return (!Util.isValidString(args[index]) ? alt : getInteger(index));
 	}
 
-	protected Integer getInteger(int index) throws Exception {
+	protected Integer getInteger(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		Integer i = null;
@@ -391,13 +393,13 @@ public abstract class Command implements Comparable<Command> {
 		return i;
 	}
 
-	protected List<Integer> getIntegerList(int index, boolean canBeEmpty) throws Exception {
+	protected List<Integer> getIntegerList(int index, boolean canBeEmpty) throws OTException {
 		if (canBeEmpty && !Util.isValidString(args[index]))
 			return new ArrayList<Integer>();
 		return getIntegerList(index);
 	}
 
-	protected List<Integer> getIntegerList(int index) throws Exception {
+	protected List<Integer> getIntegerList(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		String[] split = args[index].split(Text.INTEGER_LIST_SEPARATOR.toString());
@@ -412,7 +414,7 @@ public abstract class Command implements Comparable<Command> {
 		return list;
 	}
 
-	protected Float getFloat(int index) throws Exception {
+	protected Float getFloat(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		Float f = null;
@@ -424,7 +426,7 @@ public abstract class Command implements Comparable<Command> {
 		return f;
 	}
 
-	protected Double getDouble(int index) throws Exception {
+	protected Double getDouble(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		Double d = null;
@@ -436,17 +438,17 @@ public abstract class Command implements Comparable<Command> {
 		return d;
 	}
 
-	protected UTC getUTC(int index, UTC alt) throws Exception {
+	protected UTC getUTC(int index, UTC alt) throws OTException {
 		return (!Util.isValidString(args[index]) ? alt : getUTC(index));
 	}
 
-	protected UTC getUTC(int index, boolean canBeEmpty) throws Exception {
+	protected UTC getUTC(int index, boolean canBeEmpty) throws OTException {
 		if (canBeEmpty && !Util.isValidString(args[index]))
 			return null;
 		return getUTC(index);
 	}
 
-	protected UTC getUTC(int index) throws Exception {
+	protected UTC getUTC(int index) throws OTException {
 		if (!Util.isValidString(args[index]))
 			error(Text.EMPTY_ARGUMENT_ERROR, getArguments()[index]);
 		UTC u = null;
@@ -458,8 +460,8 @@ public abstract class Command implements Comparable<Command> {
 		return u;
 	}
 
-	private static void error(Text text, String param) throws Exception {
-		throw new Exception(String.format("%s [%s]", text, param.trim()));
+	private static void error(Text text, String param) throws OTUserException {
+		throw new OTUserException(text, param);
 	}
 
 }

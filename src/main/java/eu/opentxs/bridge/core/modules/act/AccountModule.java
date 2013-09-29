@@ -8,18 +8,22 @@ import eu.opentxs.bridge.UTC;
 import eu.opentxs.bridge.Util;
 import eu.opentxs.bridge.core.dto.Transaction;
 import eu.opentxs.bridge.core.dto.Transaction.InstrumentType;
+import eu.opentxs.bridge.core.dto.Transaction.TransactionType;
+import eu.opentxs.bridge.core.exceptions.OTException;
+import eu.opentxs.bridge.core.exceptions.OTSystemException;
+import eu.opentxs.bridge.core.exceptions.OTSystemException.Event;
 import eu.opentxs.bridge.core.modules.OTAPI;
 
 public class AccountModule extends NymModule {
 
 	protected String accountId;
 
-	private AccountModule(String serverId, String nymId, String accountId) throws Exception {
+	private AccountModule(String serverId, String nymId, String accountId) throws OTException {
 		super(serverId, nymId);
 		this.accountId = parseAccountId(accountId);
 	}
 	
-	public static AccountModule getInstance(String accountId) throws Exception {
+	public static AccountModule getInstance(String accountId) throws OTException {
 		String serverId = getAccountServerId(accountId);
 		String nymId = getAccountNymId(accountId);
 		return new AccountModule(serverId, nymId, accountId);
@@ -39,7 +43,7 @@ public class AccountModule extends NymModule {
 		return null;
 	}
 
-	public static void renameAccount(String accountId, String accountName) throws Exception {
+	public static void renameAccount(String accountId, String accountName) throws OTException {
 		attempt("Renaming account");
 		accountId = parseAccountId(accountId);
 		String accountNymId = getAccountNymId(accountId);
@@ -47,12 +51,12 @@ public class AccountModule extends NymModule {
 			accountName = getAccountStandardName(accountId);
 			print(accountName);
 		}
-		if (!OTAPI.setAccountName(accountNymId, accountId, accountName))
-			error("Failed to rename");
+		if (!OTAPI.SetAccount.name(accountNymId, accountId, accountName))
+			error("failed to rename");
 		success("Account is renamed");
 	}
 
-	public static void deleteAccount(String accountId) throws Exception {
+	public static void deleteAccount(String accountId) throws OTException {
 		attempt("Deleting account");
 		accountId = parseAccountId(accountId);
 		String serverId = getAccountServerId(accountId);
@@ -61,7 +65,7 @@ public class AccountModule extends NymModule {
 		success("Account is deleted");
 	}
 
-	private void deleteItself() throws Exception {
+	private void deleteItself() throws OTException {
 		refresh();
 		sendRequest(new RequestGenerator() {
 			@Override
@@ -71,10 +75,10 @@ public class AccountModule extends NymModule {
 		});
 	}
 
-	public void showInbox() throws Exception {
+	public void showInbox() throws OTException {
 		String ledger = OTAPI.loadInbox(serverId, nymId, accountId);
 		if (!Util.isValidString(ledger)) {
-			print("Inbox is empty");
+			log("Inbox is empty");
 			return;
 		}
 		int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
@@ -82,17 +86,23 @@ public class AccountModule extends NymModule {
 			if (size < 0)
 				warn("Inbox size is abnormal", size);
 			else
-				print("Inbox size is zero");
+				log("Inbox size is zero");
 			return;
 		}
-		List<Transaction> list = Transaction.getListForAccount(serverId, nymId, accountId, ledger, size);
+		List<Transaction> list = new ArrayList<Transaction>();
+		for (int index = 0; index < size; index++) {
+			Transaction transaction = Transaction.getTransactionForAccount(
+					serverId, nymId, accountId, ledger, index);
+			if (transaction != null)
+				list.add(transaction);
+		}
 		Transaction.showV(list);
 	}
 
-	public void showOutbox() throws Exception {
+	public void showOutbox() throws OTException {
 		String ledger = OTAPI.loadOutbox(serverId, nymId, accountId);
 		if (!Util.isValidString(ledger)) {
-			print("Outbox is empty");
+			log("Outbox is empty");
 			return;
 		}
 		int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
@@ -100,14 +110,20 @@ public class AccountModule extends NymModule {
 			if (size < 0)
 				warn("Outbox size is abnormal", size);
 			else
-				print("Outbox size is zero");
+				log("Outbox size is zero");
 			return;
 		}
-		List<Transaction> list = Transaction.getListForAccount(serverId, nymId, accountId, ledger, size);
+		List<Transaction> list = new ArrayList<Transaction>();
+		for (int index = 0; index < size; index++) {
+			Transaction transaction = Transaction.getTransactionForAccount(
+					serverId, nymId, accountId, ledger, index);
+			if (transaction != null)
+				list.add(transaction);
+		}
 		Transaction.showV(list);
 	}
 
-	public void showTransactions() throws Exception {
+	public void showTransactions() throws OTException {
 		print(Util.repeat("-", 70));
 		{
 			print(String.format("%12s:", "UNREALIZED"));
@@ -131,14 +147,19 @@ public class AccountModule extends NymModule {
 		print(Util.repeat("-", 70));
 	}
 
-	public List<Transaction> getTransactionsUnrealized() throws Exception {
+	public List<Transaction> getTransactionsUnrealized() throws OTException {
 		List<Transaction> list = new ArrayList<Transaction>();
 		{
 			String ledger = OTAPI.loadPayInbox(serverId, nymId);
 			if (Util.isValidString(ledger)) {
 				int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
 				if (size > 0) {
-					list.addAll(Transaction.getListForNym(serverId, nymId, getAccountAssetId(accountId), ledger, size));
+					for (int index = 0; index < size; index++) {
+						Transaction transaction = Transaction.getTransactionForNym(
+								serverId, nymId, getAccountAssetId(accountId), ledger, index);
+						if (transaction != null)
+							list.add(transaction);
+					}
 				} else if (size < 0) {
 					warn("Recordbox for nym size is abnormal", size);
 				}
@@ -147,9 +168,13 @@ public class AccountModule extends NymModule {
 		{
 			int size = OTAPI.GetNym.outpaymentsCount(nymId);
 			if (size > 0) {
-				list.addAll(Transaction.getListOfOutpayments(
-						serverId, nymId, getAccountAssetId(accountId), size,
-						new InstrumentType[]{InstrumentType.CHEQUE, InstrumentType.INVOICE}));
+				for (int index = 0; index < size; index++) {
+					Transaction transaction = Transaction.getTransactionForOutpayments(
+							serverId, nymId, getAccountAssetId(accountId), index,
+							new InstrumentType[]{InstrumentType.CHEQUE, InstrumentType.INVOICE});
+					if (transaction != null)
+						list.add(transaction);
+				}
 			} else if (size < 0) {
 				warn("Outpayments size is abnormal", size);
 			}
@@ -157,14 +182,19 @@ public class AccountModule extends NymModule {
 		return list;
 	}
 
-	public List<Transaction> getTransactionsRealized() throws Exception {
+	public List<Transaction> getTransactionsRealized() throws OTException {
 		List<Transaction> list = new ArrayList<Transaction>();
 		{
 			String ledger = OTAPI.loadRecordbox(serverId, nymId, nymId);
 			if (Util.isValidString(ledger)) {
 				int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
 				if (size > 0) {
-					list.addAll(Transaction.getListForNym(serverId, nymId, getAccountAssetId(accountId), ledger, size));
+					for (int index = 0; index < size; index++) {
+						Transaction transaction = Transaction.getTransactionForNym(
+								serverId, nymId, getAccountAssetId(accountId), ledger, index);
+						if (transaction != null)
+							list.add(transaction);
+					}
 				} else if (size < 0) {
 					warn("Recordbox for nym size is abnormal", size);
 				}
@@ -175,7 +205,12 @@ public class AccountModule extends NymModule {
 			if (Util.isValidString(ledger)) {
 				int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
 				if (size > 0) {
-					list.addAll(Transaction.getListForAccount(serverId, nymId, accountId, ledger, size));
+					for (int index = 0; index < size; index++) {
+						Transaction transaction = Transaction.getTransactionForAccount(
+								serverId, nymId, accountId, ledger, index);
+						if (transaction != null)
+							list.add(transaction);
+					}
 				} else if (size < 0) {
 					warn("Recordbox for account size is abnormal", size);
 				}
@@ -186,7 +221,12 @@ public class AccountModule extends NymModule {
 			if (Util.isValidString(ledger)) {
 				int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
 				if (size > 0) {
-					list.addAll(Transaction.getListForOutbox(serverId, nymId, accountId, ledger, size));
+					for (int index = 0; index < size; index++) {
+						Transaction transaction = Transaction.getTransactionForOutbox(
+								serverId, nymId, accountId, ledger, index);
+						if (transaction != null)
+							list.add(transaction);
+					}
 				} else if (size < 0) {
 					warn("Outbox size is abnormal", size);
 				}
@@ -195,30 +235,132 @@ public class AccountModule extends NymModule {
 		{
 			int size = OTAPI.GetNym.outpaymentsCount(nymId);
 			if (size > 0) {
-				list.addAll(Transaction.getListOfOutpayments(
-						serverId, nymId, getAccountAssetId(accountId), size,
-						new InstrumentType[]{InstrumentType.CASH, InstrumentType.VOUCHER}));
+				for (int index = 0; index < size; index++) {
+					Transaction transaction = Transaction.getTransactionForOutpayments(
+							serverId, nymId, getAccountAssetId(accountId), index,
+							new InstrumentType[]{InstrumentType.CASH, InstrumentType.VOUCHER});
+					if (transaction != null)
+						list.add(transaction);
+				}
 			} else if (size < 0) {
 				warn("Outpayments size is abnormal", size);
 			}
 		}
 		return list;
 	}
-
-	public void refresh() throws Exception {
-		downloadFiles();
-		processInbox();
-		processIncome();
-		verifyLastReceipt();
+	
+	public void deleteTransactions() throws OTException {
+		int i = 0;
+		{
+			String ledger = OTAPI.loadRecordbox(serverId, nymId, nymId);
+			if (Util.isValidString(ledger)) {
+				int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
+				if (size > 0) {
+					for (int index = size - 1; index >= 0; index--) {
+						Transaction transaction = Transaction.getTransactionForNym(
+								serverId, nymId, getAccountAssetId(accountId), ledger, index);
+						if (transaction != null) {
+							if (!OTAPI.clearRecord(serverId, nymId, nymId, index))
+								error("Failed to clear record");
+							i++;
+						}
+					}
+				} else if (size < 0) {
+					warn("Recordbox for nym size is abnormal", size);
+				}
+			}
+		}
+		{
+			String ledger = OTAPI.loadRecordbox(serverId, nymId, accountId);
+			if (Util.isValidString(ledger)) {
+				int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
+				if (size > 0) {
+					for (int index = size - 1; index >= 0; index--) {
+						Transaction transaction = Transaction.getTransactionForAccount(
+								serverId, nymId, accountId, ledger, index);
+						if (transaction != null) {
+							if (!OTAPI.clearRecord(serverId, nymId, nymId, index))
+								error("Failed to clear record");
+							i++;
+						}
+					}
+				} else if (size < 0) {
+					warn("Recordbox for account size is abnormal", size);
+				}
+			}
+		}
+		{
+			int size = OTAPI.GetNym.outpaymentsCount(nymId);
+			if (size > 0) {
+				for (int index = size - 1; index >= 0; index--) {
+					Transaction transaction = Transaction.getTransactionForOutpayments(
+							serverId, nymId, getAccountAssetId(accountId), index,
+							new InstrumentType[]{InstrumentType.CASH, InstrumentType.VOUCHER});
+					if (transaction != null) {
+						if (!OTAPI.Nym.removeOutpaymentsByIndex(nymId, index))
+							error("failed to remove outpayment");
+						i++;
+					}
+				}
+			} else if (size < 0) {
+				warn("Outpayments size is abnormal", size);
+			}
+		}
+		info(String.format("%s: %d", "Number of deleted transactions", i));
+		success("Transactions are deleted");
 	}
 
-	public void downloadFiles() throws Exception {
+	public void refresh() throws OTException {
+		downloadFiles();
+		List<Transaction> inboxTransactions = processInbox();
+		List<Transaction> incomeTransactions = processIncome();
+		verifyLastReceipt();
+		
+		List<Transaction> transactions = new ArrayList<Transaction>();
+		if (inboxTransactions != null)
+			transactions.addAll(inboxTransactions);
+		if (incomeTransactions != null)
+			transactions.addAll(incomeTransactions);
+			
+		if (transactions.size() > 0) {
+			int transfers = 0;
+			int cash = 0;
+			int vouchers = 0;
+			int cheques = 0;
+			int invoices = 0;
+			for (Transaction transaction : transactions) {
+				InstrumentType instrumentType = transaction.getInstrumentType();
+				TransactionType trxnType = transaction.getTrxnType();
+				if (instrumentType.equals(InstrumentType.TRANSFER) && trxnType.equals(TransactionType.PENDING))
+					transfers++;
+				else if (instrumentType.equals(InstrumentType.CASH) && trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
+					cash++;
+				else if (instrumentType.equals(InstrumentType.VOUCHER) && trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
+					vouchers++;
+				else if (instrumentType.equals(InstrumentType.CHEQUE) && trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
+					cheques++;
+				else if (instrumentType.equals(InstrumentType.INVOICE) && trxnType.equals(TransactionType.INSTRUMENT_NOTICE))
+					invoices++;
+			}
+			if (transfers + cash + vouchers + cheques + invoices > 0) {
+				print(Util.repeat("-", 13));
+				print(String.format("%12s: %2d", "Transfers", transfers));
+				print(String.format("%12s: %2d", "Cash", cash));
+				print(String.format("%12s: %2d", "Vouchers", vouchers));
+				print(String.format("%12s: %2d", "Cheques", cheques));
+				print(String.format("%12s: %2d", "Invoices", invoices));
+				print(Util.repeat("-", 13));
+			}
+		}
+	}
+
+	public void downloadFiles() throws OTException {
 		attempt("Downloading files");
 		getIntermediaryFiles(true);
 		success("Files are downloaded");
 	}
 
-	public void processInbox() throws Exception {
+	public List<Transaction> processInbox() throws OTException {
 		attempt("Processing inbox");
 		getIntermediaryFiles(false);
 
@@ -226,7 +368,7 @@ public class AccountModule extends NymModule {
 		int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
 		if (size == 0) {
 			skip("Nothing to process, inbox is empty");
-			return;
+			return null;
 		}
 
 		getTransactionNumbers();
@@ -235,7 +377,7 @@ public class AccountModule extends NymModule {
 		if (!Util.isValidString(responseLedger))
 			error("response ledger is not valid");
 
-		int count = 0;
+		List<Transaction> transactions = new ArrayList<Transaction>();
 		for (int index = 0; index < size; index++) {
 			String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
 			if (!Util.isValidString(transaction)) {
@@ -244,10 +386,10 @@ public class AccountModule extends NymModule {
 			}
 			String temp = new String(responseLedger);
 			responseLedger = OTAPI.Transaction.createResponse(serverId, nymId, accountId, temp, transaction, true);
-			count++;
+			transactions.add(Transaction.getTransactionForAccount(serverId, nymId, accountId, ledger, index));
 		}
-		if (count == 0)
-			error("Inbox has only empty transactions");
+		if (transactions.size() == 0)
+			error("inbox has only empty transactions");
 
 		if (!Util.isValidString(responseLedger))
 			error("response ledger is not valid");
@@ -262,26 +404,27 @@ public class AccountModule extends NymModule {
 			}
 		});
 		success("Inbox is processed");
+		return transactions;
 	}
 
-	public void processIncome() throws Exception {
+	public List<Transaction> processIncome() throws OTException {
 		attempt("Processing income");
-		getAndProcessNymbox(true);
+		List<Transaction> transactions = getAndProcessNymbox(true);
+		
 		String ledger = OTAPI.loadPayInbox(serverId, nymId);
 		if (!Util.isValidString(ledger)) {
-			print("PayInbox is empty");
-			return;
+			log("PayInbox ledger is empty");
+			return null;
 		}
 		int size = OTAPI.Ledger.getCount(serverId, nymId, nymId, ledger);
 		if (size <= 0) {
 			if (size < 0)
 				warn("PayInbox size is abnormal", size);
 			else
-				print("PayInbox size is zero");
-			return;
+				log("PayInbox size is zero");
+			return null;
 		}
-		int i = 0;
-		for (int index = size - 1; index >= 0; index--) {// /going backwards to enable removing items
+		for (int index = size - 1; index >= 0; index--) {/** going backwards to enable removing items */
 			String instrument = OTAPI.Ledger.getInstrumentbyIndex(serverId, nymId, nymId, ledger, index);
 			if (!Util.isValidString(instrument))
 				error("instrument is empty");
@@ -289,43 +432,40 @@ public class AccountModule extends NymModule {
 			if (!getAccountAssetId(accountId).equals(assetId))
 				continue;
 			InstrumentType instrumentType = getInstrumentType(instrument);
-			if (instrumentType.equals(InstrumentType.INVOICE))
-				continue;
-			if (instrumentType.equals(InstrumentType.VOUCHER) || instrumentType.equals(InstrumentType.CHEQUE)) {
-				UTC now = getTime();
-				UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidFrom(instrument));
-				if (validFrom != null && validFrom.isAfter(now)) {
-					warn("Payment is not valid yet");
-					continue;
-				}
-				UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(instrument));
-				if (validTo != null && validTo.isBefore(now)) {
-					warn("Payment is expired");
-					continue;
-				}
-			}
 			if (instrumentType.equals(InstrumentType.VOUCHER)) {
-				executeVoucher(instrument);
-				i++;
+				try {
+					executeVoucher(instrument);
+				} catch (OTSystemException e) {
+					if (!e.getEvent().equals(Event.BALANCE_AGREEMENT_ERROR))
+						error(e);
+					info("Voucher failed to execute and it will be removed");
+					if (!OTAPI.recordPayment(serverId, nymId, true, index, false))
+						error("failed to record payment");
+				}
 			} else if (instrumentType.equals(InstrumentType.CASH)) {
 				importCashToAccount(instrument);
-				OTAPI.recordPayment(serverId, nymId, true, index, true);
-				i++;
+				if (!OTAPI.recordPayment(serverId, nymId, true, index, true))
+					error("failed to record payment");
+			} else if (instrumentType.equals(InstrumentType.CHEQUE)) {
+				
+			} else if (instrumentType.equals(InstrumentType.INVOICE)) {
+				
 			}
 		}
-		success("Income is processed", i);
+		success("Income is processed");
+		return transactions;
 	}
 
-	public void verifyLastReceipt() throws Exception {
+	public void verifyLastReceipt() throws OTException {
 		if (!OTAPI.exists("receipts", serverId, String.format("%s.%s", nymId, "success"))
 				&& !OTAPI.exists("receipts", serverId, String.format("%s.%s", accountId, "success"))) {
-			print("There is no receipt for this account");
+			info("There is no receipt for this account");
 			return;
 		}
 		if (!OTAPI.verifyAccountReceipt(serverId, nymId, accountId)) {
 			String ledger = OTAPI.loadNymbox(serverId, nymId);
 			if (!Util.isValidString(ledger)) {
-				warn("Nymbox is empty");
+				warn("Nymbox ledger is empty");
 				return;
 			}
 			int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
@@ -333,22 +473,25 @@ public class AccountModule extends NymModule {
 				if (size < 0)
 					warn("Nymbox size is abnormal", size);
 				else
-					print("Nymbox size is zero");
+					log("Nymbox size is zero");
 				return;
 			}
-			error("The intermediary files have FAILED to verify against the last signed receipt");
+			error("Failed to verify against the last signed receipt");
 		}
-		success("The intermediary files have all been VERIFIED against the last signed receipt");
+		success("Verified against the last signed receipt");
 	}
 
-	public static void checkAvailableFunds(String accountId, Double requiredVolume) throws Exception {
+	public static void checkAvailableFunds(String accountId, Double requiredVolume) throws OTException {
 		AccountType accountType = AccountType.parse(getAccountType(accountId));
 		if (accountType.equals(AccountType.ISSUER))
 			return;
-		Double balance = getAccountBalanceValue(accountId);
-		if (requiredVolume > balance)
-			error(String.format("Not enough money in the account. You have only %.2f left.", balance));
-		print("Enough money is available");
+		String assetId = getAccountAssetId(accountId);
+		Integer balanceValue = convertAmountToValue(getAccountBalance(accountId));
+		Integer requiredValue = convertVolumeToValue(assetId, requiredVolume);
+		if (requiredValue > balanceValue)
+			error(String.format("Not enough money in the account. You have only %s left.",
+					convertValueToFormat(assetId, balanceValue)));
+		info("Enough money is available");
 	}
 
 	public void showTransfer(Double volume, String hisAccountId, String note) {
@@ -356,30 +499,32 @@ public class AccountModule extends NymModule {
 		print(String.format("%12s: %s (%s)", "Server", serverId, getServerName(serverId)));
 		print(String.format("%12s: %s (%s)", "From", accountId, getAccountName(accountId)));
 		print(String.format("%12s: %s (%s)", "To", hisAccountId, getContactAccountName(hisAccountId)));
-		print(String.format("%12s: %.2f", "Volume", volume));
+		print(String.format("%12s: %s", "Volume", convertVolumeToFormat(volume)));
 		print(String.format("%12s: %s", "Note", note));
 		print(Util.repeat("-", 13));
 	}
 
-	public void transfer(final Double volume, final String hisAccountId, final String note) throws Exception {
+	public void transfer(Double volume, final String hisAccountId, final String note) throws OTException {
 		attempt("Moving account to account");
 		if (!Util.isValidString(hisAccountId))
 			error("hisAccountId is empty");
 		getIntermediaryFiles(true);// /needed only to unblock a newly created account
-		print(String.format("%.2f", volume));
+		final String amount = convertVolumeToAmount(volume);
+		info(String.format("Amount being trasferred: %s (%d)", 
+				convertAmountToFormat(amount), convertAmountToValue(amount)));
 		sendTransaction(new RequestGenerator() {
 			@Override
 			public int getRequest() {
-				return OTAPI.notarizeTransfer(serverId, nymId, accountId, volume, hisAccountId, note);
+				return OTAPI.notarizeTransfer(serverId, nymId, accountId, amount, hisAccountId, note);
 			}
 		});
 		success("Move account to account is made");
 	}
-
-	public void moveAccountToPurse(final Double volume) throws Exception {
+	
+	public void moveAccountToPurse(Double volume) throws OTException {
 		attempt("Moving account to purse");
 		final String assetId = getAccountAssetId(accountId);
-		if (!OTAPI.mintIsStillGood(serverId, assetId)) {
+		if (!OTAPI.Mint.isStillGood(serverId, assetId)) {
 			sendRequest(new RequestGenerator() {
 				@Override
 				public int getRequest() {
@@ -390,10 +535,11 @@ public class AccountModule extends NymModule {
 		String mintContract = OTAPI.loadMint(serverId, assetId);
 		if (!Util.isValidString(mintContract))
 			error("mint contract failed to load");
+		final String amount = convertVolumeToAmount(volume);
 		sendTransaction(new RequestGenerator() {
 			@Override
 			public int getRequest() {
-				return OTAPI.notarizeWithdrawal(serverId, nymId, accountId, volume);
+				return OTAPI.notarizeWithdrawal(serverId, nymId, accountId, amount);
 			}
 		});
 		String purse = OTAPI.loadPurse(serverId, nymId, assetId);
@@ -402,7 +548,7 @@ public class AccountModule extends NymModule {
 		success("Move account to purse is made");
 	}
 
-	public void movePurseToAccount(String purse, List<Integer> indices) throws Exception {
+	public void movePurseToAccount(String purse, List<Integer> indices) throws OTException {
 		attempt("Moving purse to account");
 		String assetId = getAccountAssetId(accountId);
 		AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
@@ -416,15 +562,15 @@ public class AccountModule extends NymModule {
 		success("Move purse to account is made");
 	}
 
-	public void verifyCash(String cash) throws Exception {
+	public void verifyCash(String cash) throws OTException {
 		String hisNymId = OTAPI.Instrument.getRecipientNymId(cash);
 		if (Util.isValidString(hisNymId) && !nymId.equals(hisNymId))
 			error("Your nym and the recipient nym do not match");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(cash)))
-			error("Your account's asset type is incompatible with the payment");
+			error("Your account's asset type is incompatible with this cash");
 	}
 
-	public void importCashToAccount(final String cash) throws Exception {
+	public void importCashToAccount(final String cash) throws OTException {
 		attempt("Importing cash to account");
 		sendTransaction(new RequestGenerator() {
 			@Override
@@ -435,17 +581,21 @@ public class AccountModule extends NymModule {
 		success("Cash is successfully imported to account");
 	}
 
-	public String exportAccountToCash(Double volume, String hisNymId) throws Exception {
+	public String exportAccountToCash(Double volume, String hisNymId) throws OTException {
 		attempt("Exporting account to cash");
 		String assetId = getAccountAssetId(accountId);
 		AssetModule assetModule = new AssetModule(serverId, nymId, assetId);
 
 		/** first if there is any existing purse deposit it back to account */
 		String oldPurse = OTAPI.loadPurse(serverId, nymId, assetId);
-		Double temp = null;
+		Double oldPurseVolume = null;
 		if (Util.isValidString(oldPurse)) {
-			temp = getPurseBalanceValue(serverId, assetId, oldPurse);
-			movePurseToAccount(oldPurse, null);
+			Integer value = getPurseBalanceValue(serverId, assetId, oldPurse);
+			oldPurseVolume = convertValueToVolume(assetId, value);
+			if (oldPurseVolume > 0)
+				movePurseToAccount(oldPurse, null);
+			else
+				oldPurseVolume = null;
 		}
 
 		/** next withdraw from account to purse and export it to cash */
@@ -453,21 +603,22 @@ public class AccountModule extends NymModule {
 		String newPurse = assetModule.exportPurseToCash(null, hisNymId);
 
 		/** finally if there existed any purse reinstate it */
-		if (temp != null)
-			moveAccountToPurse(temp);
+		if (oldPurseVolume != null)
+			moveAccountToPurse(oldPurseVolume);
 
 		success("Account is successfully exported to cash");
 		return newPurse;
 	}
 
-	public String writeVoucher(final Double volume, final String hisNymId, final String note) throws Exception {
+	public String writeVoucher(Double volume, final String hisNymId, final String note) throws OTException {
 		attempt("Writing voucher");
 		if (!Util.isValidString(hisNymId))
 			error("hisNymId is empty");
+		final String amount = convertVolumeToAmount(volume);
 		String message = sendTransaction(new RequestGenerator() {
 			@Override
 			public int getRequest() {
-				return OTAPI.writeVoucher(serverId, nymId, accountId, volume, hisNymId, note);
+				return OTAPI.writeVoucher(serverId, nymId, accountId, amount, hisNymId, note);
 			}
 		});
 		String ledger = OTAPI.Message.getLedger(message);
@@ -484,7 +635,7 @@ public class AccountModule extends NymModule {
 		return voucher;
 	}
 
-	public void sendVoucher(String voucher, String hisNymId) throws Exception {
+	public void sendVoucher(String voucher, String hisNymId) throws OTException {
 		attempt("Sending voucher");
 		if (!Util.isValidString(voucher))
 			error("voucher is empty");
@@ -493,8 +644,27 @@ public class AccountModule extends NymModule {
 		sendPayment(voucher, hisNymId);
 		success("Voucher is sent");
 	}
-
-	public Double verifyVoucher(String voucher) throws Exception {
+	
+	public void cancelVoucher(String voucher) throws OTException {
+		attempt("Cancelling voucher");
+		if (!Util.isValidString(voucher))
+			error("voucher is empty");
+		if (!serverId.equals(OTAPI.Instrument.getServerId(voucher)))
+			error("This voucher is not present on this server");
+		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(voucher)))
+			error("Your account's asset type is incompatible with this voucher");
+		{
+			String myNymId = OTAPI.Instrument.getRemitterNymId(voucher);
+			String myAccountId = OTAPI.Instrument.getRemitterAccountId(voucher);
+			if (!nymId.equals(myNymId) || !accountId.equals(myAccountId))
+				error("Attempt to cancel a voucher when not being its owner");
+			//executeVoucher(voucher);
+		}
+		removeVoucher(voucher);
+		success("Voucher is cancelled");
+	}
+	
+	public void verifyVoucher(String voucher) throws OTException {
 		attempt("Verifying voucher");
 		if (!Util.isValidString(voucher))
 			error("voucher is empty");
@@ -504,20 +674,13 @@ public class AccountModule extends NymModule {
 		if (Util.isValidString(hisNymId) && !nymId.equals(hisNymId))
 			error("Your nym and the recipient nym do not match");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(voucher)))
-			error("Your account's asset type is incompatible with the payment");
-		UTC now = getTime();
-		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidTo(voucher));
-		if (validFrom != null && validFrom.isAfter(now))
-			error("This voucher is not valid yet");
-		UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(voucher));
-		if (validTo != null && validTo.isBefore(now))
-			error("This voucher is expired");
-		Double volume = getDouble(OTAPI.Instrument.getAmount(voucher));
+			error("Your account's asset type is incompatible with this voucher");
+		String amount = OTAPI.Instrument.getAmount(voucher);
+		info(String.format("Voucher amount: %s", convertAmountToFormat(amount)));
 		success("Voucher is verified");
-		return volume;
 	}
 
-	public void executeVoucher(final String voucher) throws Exception {
+	public void executeVoucher(final String voucher) throws OTException {
 		attempt("Executing voucher");
 		if (!Util.isValidString(voucher))
 			error("voucher is empty");
@@ -531,15 +694,16 @@ public class AccountModule extends NymModule {
 		success("Voucher is executed");
 	}
 
-	public String writeCheque(Double volume, String hisNymId, String note, UTC expiry) throws Exception {
+	public String writeCheque(Double volume, String hisNymId, String note, UTC expiry) throws OTException {
 		attempt("Writing cheque");
+		String amount = convertVolumeToAmount(volume);
 		if (!Util.isValidString(hisNymId))
-			hisNymId = "";// error("hisNymId is empty");
+			hisNymId = "";
 		if (!Util.isValidString(note))
 			note = "";
 		String validFrom = "";
 		String validTo = (expiry != null ? new Long(expiry.getSeconds()).toString() : "");
-		String cheque = OTAPI.writeCheque(serverId, nymId, accountId, volume, hisNymId, note, validFrom, validTo);
+		String cheque = OTAPI.writeCheque(serverId, nymId, accountId, amount, hisNymId, note, validFrom, validTo);
 		if (!Util.isValidString(cheque))
 			error("cheque is empty");
 		publish(cheque);
@@ -547,7 +711,7 @@ public class AccountModule extends NymModule {
 		return cheque;
 	}
 
-	public void sendCheque(String cheque, String hisNymId) throws Exception {
+	public void sendCheque(String cheque, String hisNymId) throws OTException {
 		attempt("Sending cheque");
 		if (!Util.isValidString(cheque))
 			error("cheque is empty");
@@ -557,21 +721,36 @@ public class AccountModule extends NymModule {
 		success("Cheque is sent");
 	}
 
-	public void cancelCheque(String cheque) throws Exception {
+	public void cancelCheque(String cheque) throws OTException {
 		attempt("Cancelling cheque");
 		if (!Util.isValidString(cheque))
 			error("cheque is empty");
 		if (!serverId.equals(OTAPI.Instrument.getServerId(cheque)))
 			error("This cheque is not present on this server");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(cheque)))
-			error("Your account's asset type is incompatible with the payment");
-		if (!OTAPI.cancelCheque(serverId, nymId, accountId, cheque))
-			error("failed to cancel cheque");
+			error("Your account's asset type is incompatible with this cheque");
+		UTC now = getTime();
+		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidFrom(cheque));
+		if (validFrom != null && validFrom.isAfter(now))
+			error("This cheque cannot be cancelled because is not valid yet");
+		UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(cheque));
+		if (validTo != null && validTo.isBefore(now)) {
+			info("Unable to cancel this cheque becasue it is already expired. So only removing it from outpayments.");
+		} else {
+			// /does not work this way, what does work is self-execution of the instrument
+			//if (!OTAPI.cancelCheque(serverId, nymId, accountId, cheque))
+			//	error("failed to cancel cheque");
+			String myNymId = OTAPI.Instrument.getSenderNymId(cheque);
+			String myAccountId = OTAPI.Instrument.getSenderAccountId(cheque);
+			if (!nymId.equals(myNymId) || !accountId.equals(myAccountId))
+				error("Attempt to cancel a cheque when not being its owner");
+			executeCheque(cheque);
+		}
 		removeOutpayment(OTAPI.Instrument.getTransactionNum(cheque));
 		success("Cheque is cancelled");
 	}
 
-	public Double verifyCheque(String cheque) throws Exception {
+	public void verifyCheque(String cheque) throws OTException {
 		attempt("Verifying cheque");
 		if (!Util.isValidString(cheque))
 			error("cheque is empty");
@@ -581,20 +760,20 @@ public class AccountModule extends NymModule {
 		if (Util.isValidString(hisNymId) && !nymId.equals(hisNymId))
 			error("Your nym and the recipient nym do not match");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(cheque)))
-			error("Your account's asset type is incompatible with the payment");
+			error("Your account's asset type is incompatible with this cheque");
 		UTC now = getTime();
-		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidTo(cheque));
+		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidFrom(cheque));
 		if (validFrom != null && validFrom.isAfter(now))
 			error("This cheque is not valid yet");
 		UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(cheque));
 		if (validTo != null && validTo.isBefore(now))
 			error("This cheque is expired");
-		Double volume = getDouble(OTAPI.Instrument.getAmount(cheque));
+		String amount = OTAPI.Instrument.getAmount(cheque);
+		info(String.format("Cheque amount: %s", convertAmountToFormat(amount)));
 		success("Cheque is verified");
-		return volume;
 	}
 
-	public void executeCheque(final String cheque) throws Exception {
+	public void executeCheque(final String cheque) throws OTException {
 		attempt("Executing cheque");
 		if (!Util.isValidString(cheque))
 			error("cheque is empty");
@@ -608,12 +787,13 @@ public class AccountModule extends NymModule {
 		success("Cheque is executed");
 	}
 
-	public String writeInvoice(Double volume, String hisNymId, String note) throws Exception {
+	public String writeInvoice(Double volume, String hisNymId, String note) throws OTException {
 		attempt("Writing invoice");
+		String amount = convertVolumeToAmount(volume);
 		volume = new Double(0 - volume);
 		String validFrom = "";
 		String validTo = "";
-		String invoice = OTAPI.writeCheque(serverId, nymId, accountId, volume, hisNymId, note, validFrom, validTo);
+		String invoice = OTAPI.writeCheque(serverId, nymId, accountId, amount, hisNymId, note, validFrom, validTo);
 		if (!Util.isValidString(invoice))
 			error("invoice is empty");
 		publish(invoice);
@@ -621,7 +801,7 @@ public class AccountModule extends NymModule {
 		return invoice;
 	}
 
-	public void sendInvoice(String invoice, String hisNymId) throws Exception {
+	public void sendInvoice(String invoice, String hisNymId) throws OTException {
 		attempt("Sending invoice");
 		if (!Util.isValidString(invoice))
 			error("invoice is empty");
@@ -631,21 +811,36 @@ public class AccountModule extends NymModule {
 		success("Invoice is sent");
 	}
 
-	public void cancelInvoice(String invoice) throws Exception {
+	public void cancelInvoice(String invoice) throws OTException {
 		attempt("Cancelling invoice");
 		if (!Util.isValidString(invoice))
 			error("invoice is empty");
 		if (!serverId.equals(OTAPI.Instrument.getServerId(invoice)))
 			error("This invoice is not present on this server");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(invoice)))
-			error("Your account's asset type is incompatible with the payment");
-		if (!OTAPI.cancelCheque(serverId, nymId, accountId, invoice))
-			error("failed to cancel invoice");
+			error("Your account's asset type is incompatible with this invoice");
+		UTC now = getTime();
+		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidFrom(invoice));
+		if (validFrom != null && validFrom.isAfter(now))
+			error("This invoice cannot be cancelled because is not valid yet");
+		UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(invoice));
+		if (validTo != null && validTo.isBefore(now)) {
+			info("Unable to cancel this invoice becasue it is already expired. So only removing it from outpayments.");
+		} else {
+			// /does not work this way, what does work is self-execution of the instrument
+			//if (!OTAPI.cancelCheque(serverId, nymId, accountId, invoice))
+			//	error("failed to cancel invoice");
+			String myNymId = OTAPI.Instrument.getSenderNymId(invoice);
+			String myAccountId = OTAPI.Instrument.getSenderAccountId(invoice);
+			if (!nymId.equals(myNymId) || !accountId.equals(myAccountId))
+				error("Attempt to cancel an invoice when not being its owner");
+			executeInvoice(invoice);
+		}
 		removeOutpayment(OTAPI.Instrument.getTransactionNum(invoice));
 		success("Invoice is cancelled");
 	}
 
-	public Double verifyInvoice(String invoice) throws Exception {
+	public void verifyInvoice(String invoice) throws OTException {
 		attempt("Verifying invoice");
 		if (!Util.isValidString(invoice))
 			error("invoice is empty");
@@ -655,20 +850,20 @@ public class AccountModule extends NymModule {
 		if (Util.isValidString(hisNymId) && !nymId.equals(hisNymId))
 			error("Your nym and the recipient nym do not match");
 		if (!getAccountAssetId(accountId).equals(OTAPI.Instrument.getAssetId(invoice)))
-			error("Your account's asset type is incompatible with the payment");
+			error("Your account's asset type is incompatible with this invoice");
 		UTC now = getTime();
-		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidTo(invoice));
+		UTC validFrom = UTC.getDateUTC(OTAPI.Instrument.getValidFrom(invoice));
 		if (validFrom != null && validFrom.isAfter(now))
 			error("This invoice is not valid yet");
 		UTC validTo = UTC.getDateUTC(OTAPI.Instrument.getValidTo(invoice));
 		if (validTo != null && validTo.isBefore(now))
 			error("This invoice is expired");
-		Double volume = 0 - getDouble(OTAPI.Instrument.getAmount(invoice));
+		String amount = OTAPI.Instrument.getAmount(invoice);
+		info(String.format("Invoice amount: %s", convertAmountToFormat(amount)));
 		success("Invoice is verified");
-		return volume;
 	}
 
-	public void executeInvoice(final String invoice) throws Exception {
+	public void executeInvoice(final String invoice) throws OTException {
 		attempt("Execute invoice");
 		if (!Util.isValidString(invoice))
 			error("invoice is empty");
@@ -682,13 +877,13 @@ public class AccountModule extends NymModule {
 		success("Invoice is executed");
 	}
 
-	public void hack1() throws Exception {
+	public void hack1() throws OTException {
 		synchronizeRequestNumber();
 		getAndProcessNymbox(true);
 		getTransactionNumbers();
 	}
 
-	public void hack2() throws Exception {
+	public void hack2() throws OTException {
 		error(Text.FEATURE_UNSUPPORTED_YET);
 	}
 
@@ -696,21 +891,19 @@ public class AccountModule extends NymModule {
 	 * internal
 	 *********************************************************************/
 
-	private String sendTransaction(RequestGenerator generator) throws Exception {
+	private String sendTransaction(RequestGenerator generator) throws OTException {
 		return sendTransaction(generator, true);
 	}
 
-	private String sendTransaction(RequestGenerator generator, boolean canRetry) throws Exception {
+	private String sendTransaction(RequestGenerator generator, boolean canRetry) throws OTException {
 		getIntermediaryFiles(false);
 		getTransactionNumbers();
 		OTAPI.flushMessageBuffer();
 		int requestId = generator.getRequest();
-		String message = processRequest(requestId, false);
-		if (message == null)
-			error(Text.TRANSACTION_MESSAGE_IS_INVALID);
+		String message = processRequest(requestId);
 		{
-			attempt(Text.VERIFYING_BALANCE_AGREEMENT);
-			int result = OTAPI.verifyBalanceAgreement(serverId, nymId, accountId, message);
+			attempt("Verifying balance agreement");
+			int result = OTAPI.Message.getBalanceAgreementSuccess(serverId, nymId, accountId, message);
 			if (result != 1) {
 				if (canRetry) {
 					warn("Failed to verify balance agreement, proceeding to contingency plan");
@@ -721,20 +914,20 @@ public class AccountModule extends NymModule {
 					sendTransaction(generator, false);
 					return null;
 				}
-				error(Text.BALANCE_AGREEMENT_ERROR);
+				error(Event.BALANCE_AGREEMENT_ERROR);
 			}
 		}
 		{
-			attempt(Text.VERIFYING_TRANSACTION_MESSAGE);
-			int result = OTAPI.verifyTransactionMessage(serverId, nymId, accountId, message);
+			attempt("Verifying transaction message");
+			int result = OTAPI.Message.getTransactionSuccess(serverId, nymId, accountId, message);
 			if (result != 1)
-				error(Text.TRANSACTION_MESSAGE_VERIFICATION_ERROR);
+				error(Event.TRANSACTION_MESSAGE_VERIFICATION_ERROR);
 		}
 		getIntermediaryFiles(true);
 		return message;
 	}
 
-	private void getIntermediaryFiles(boolean forceDownload) throws Exception {
+	private void getIntermediaryFiles(boolean forceDownload) throws OTException {
 		{
 			attempt("Synchronizing account");
 			sendRequest(new RequestGenerator() {
@@ -746,10 +939,10 @@ public class AccountModule extends NymModule {
 		}
 		{
 			attempt("Verifying inbox hash");
-			String cachedHash = OTAPI.getInboxHashCached(accountId);
+			String cachedHash = OTAPI.GetAccount.inboxHashCached(accountId);
 			if (!Util.isValidString(cachedHash))
 				warn("Unable to retrieve cached copy of server-side inbox hash");
-			String localHash = OTAPI.getInboxHashLocal(nymId, accountId);
+			String localHash = OTAPI.GetNym.inboxHashLocal(nymId, accountId);
 			if (!Util.isValidString(localHash))
 				warn("Unable to retrieve client-side inbox hash");
 			if (!forceDownload && cachedHash.equals(localHash)) {
@@ -767,10 +960,10 @@ public class AccountModule extends NymModule {
 		}
 		{
 			attempt("Verifying outbox hash");
-			String cachedHash = OTAPI.getOutboxHashCached(accountId);
+			String cachedHash = OTAPI.GetAccount.outboxHashCached(accountId);
 			if (!Util.isValidString(cachedHash))
 				warn("Unable to retrieve cached copy of server-side outbox hash");
-			String localHash = OTAPI.getOutboxHashLocal(nymId, accountId);
+			String localHash = OTAPI.GetNym.outboxHashLocal(nymId, accountId);
 			if (!Util.isValidString(localHash))
 				warn("Unable to retrieve client-side outbox hash");
 			if (!forceDownload && cachedHash.equals(localHash)) {
@@ -786,5 +979,39 @@ public class AccountModule extends NymModule {
 				insureHaveAllBoxReceipts(OTAPI.Box.OUTBOX, accountId);
 			}
 		}
+	}
+	
+	private String convertVolumeToAmount(Double volume) {
+		return convertVolumeToAmount(getAccountAssetId(accountId), volume);
+	}
+	private String convertAmountToFormat(String amount) {
+		return convertAmountToFormat(getAccountAssetId(accountId), amount);
+	}
+	private String convertVolumeToFormat(Double volume) {
+		return convertVolumeToFormat(getAccountAssetId(accountId), volume);
+	}
+	
+	private void removeVoucher(String voucher) throws OTException {
+		attempt("Removing voucher");
+		String ledger = OTAPI.loadRecordbox(serverId, nymId, accountId);
+		if (!Util.isValidString(ledger))
+			error("recordbox ledger is empty");
+		int size = OTAPI.Ledger.getCount(serverId, nymId, accountId, ledger);
+		if (size <= 0)
+			error("recordbox size is zero or negative");
+		String trxnNum = OTAPI.Instrument.getTransactionNum(voucher);
+		for (int index = 0; index < size; index++) {
+			String transaction = OTAPI.Ledger.getTransactionByIndex(serverId, nymId, accountId, ledger, index);
+			if (!Util.isValidString(transaction))
+				error("transaction is empty");
+			String refNum = OTAPI.Transaction.getDisplayReferenceToNum(serverId, nymId, accountId, transaction);
+			if (trxnNum.equals(refNum)) {
+				if (!OTAPI.clearRecord(serverId, nymId, accountId, index))
+					error("failed to clear record");
+				success("Voucher is removed");
+				return;
+			}
+		}
+		error("Voucher not found");
 	}
 }

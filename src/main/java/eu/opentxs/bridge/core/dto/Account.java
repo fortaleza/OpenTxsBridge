@@ -32,7 +32,7 @@ public class Account implements Comparable<Account> {
 		int count = OTAPI.getAccountCount();
 		List<Account> list = new ArrayList<Account>();
 		for (int index = 0; index < count; index++) {
-			String accountId = OTAPI.getAccountId(index);
+			String accountId = OTAPI.GetAccount.id(index);
 			Account account = new Account(accountId, Module.getAccountName(accountId), Module.getAccountServerId(accountId));
 			list.add(account);
 		}

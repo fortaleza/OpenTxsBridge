@@ -36,9 +36,13 @@ public class Console extends JTextPane {
 		public static final char DOWN = 12;// ^r
 		public static BufferedReader bis = null;
 
-		public static String readLineFromConsole() throws IOException {
+		public static String readLineFromConsole() {
 			String line = null;
-			line = bis.readLine();
+			try {
+				line = bis.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			return line;
 		}
 

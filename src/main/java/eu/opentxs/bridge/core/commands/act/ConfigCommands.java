@@ -6,6 +6,7 @@ import eu.opentxs.bridge.core.OpenTransactions;
 import eu.opentxs.bridge.core.commands.Command;
 import eu.opentxs.bridge.core.commands.Commands;
 import eu.opentxs.bridge.core.dto.Account;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.Module;
 
 public class ConfigCommands extends Commands {
@@ -38,11 +39,11 @@ public class ConfigCommands extends Commands {
 			};
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			Sophistication sophistication = Sophistication.values()[getInteger(0) - 1];
 			execute(sophistication);
 		}
-		public static void execute(Sophistication sophistication) throws Exception {
+		public static void execute(Sophistication sophistication) throws OTException {
 			Module.setSophistication(sophistication);
 			OpenTransactions.reset();
 		}
@@ -51,7 +52,7 @@ public class ConfigCommands extends Commands {
 	public static class SetServer extends Command {
 		private List<String> serverIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			serverIds = Module.getServerIds();
 			if (serverIds.size() == 0)
 				error("You have no servers in your wallet");
@@ -73,11 +74,11 @@ public class ConfigCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String serverId = new PlainExtractor().eval(0, serverIds);
 			execute(serverId);
 		}
-		public static void execute(String serverId) throws Exception {
+		public static void execute(String serverId) throws OTException {
 			Module.setMyServerId(serverId);
 		}
 	}
@@ -85,7 +86,7 @@ public class ConfigCommands extends Commands {
 	public static class SetNym extends Command {
 		private List<String> nymIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			nymIds = Module.getNymIds();
 			if (nymIds.size() == 0)
 				error("You have no nyms in your wallet");
@@ -107,11 +108,11 @@ public class ConfigCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String nymId = new PlainExtractor().eval(0, nymIds);
 			execute(nymId);
 		}
-		public static void execute(String nymId) throws Exception {
+		public static void execute(String nymId) throws OTException {
 			Module.setMyNymId(nymId);
 		}
 	}
@@ -119,7 +120,7 @@ public class ConfigCommands extends Commands {
 	public static class SetAsset extends Command {
 		private List<String> assetIds;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			assetIds = Module.getAssetIds();
 			if (assetIds.size() == 0)
 				error("You have no assets in your wallet");
@@ -141,11 +142,11 @@ public class ConfigCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String assetId = new PlainExtractor().eval(0, assetIds);
 			execute(assetId);
 		}
-		public static void execute(String assetId) throws Exception {
+		public static void execute(String assetId) throws OTException {
 			Module.setMyAssetId(assetId);
 		}
 	}
@@ -153,7 +154,7 @@ public class ConfigCommands extends Commands {
 	public static class SetAccount extends Command {
 		private List<Account> accounts;
 		@Override
-		public void sanity() throws Exception {
+		public void sanity() throws OTException {
 			accounts = Account.getList();
 			if (accounts.size() == 0)
 				error("You have no accounts in your wallet");
@@ -173,7 +174,7 @@ public class ConfigCommands extends Commands {
 			return null;
 		}
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			String accountId = (new Extractor<Account>() {
 				@Override
 				public String get(Account account) {
@@ -182,7 +183,7 @@ public class ConfigCommands extends Commands {
 			}).eval(0, accounts);
 			execute(accountId);
 		}
-		public static void execute(String accountId) throws Exception {
+		public static void execute(String accountId) throws OTException {
 			Module.setMyAccountId(accountId);
 			Module.showLedger(accountId);
 		}
@@ -190,10 +191,10 @@ public class ConfigCommands extends Commands {
 
 	public static class ShowConfig extends Command {
 		@Override
-		protected void action(String[] args) throws Exception {
+		protected void action(String[] args) throws OTException {
 			execute();
 		}
-		public static void execute() throws Exception {
+		public static void execute() throws OTException {
 			Module.showConfig();
 		}
 	}

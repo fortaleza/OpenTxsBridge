@@ -3,18 +3,19 @@ package eu.opentxs.bridge.core.modules.act;
 import java.util.List;
 
 import eu.opentxs.bridge.Util;
+import eu.opentxs.bridge.core.exceptions.OTException;
 import eu.opentxs.bridge.core.modules.OTAPI;
 
 public class ServerModule extends ContactModule {
 
 	protected String serverId;
 
-	public ServerModule(String serverId) throws Exception {
+	public ServerModule(String serverId) throws OTException {
 		super();
 		this.serverId = parseServerId(serverId);
 	}
 
-	public static String createServer(String nymId, String definition) throws Exception {
+	public static String createServer(String nymId, String definition) throws OTException {
 		attempt("Creating new server");
 		nymId = parseNymId(nymId);
 
@@ -30,7 +31,7 @@ public class ServerModule extends ContactModule {
 		return serverId;
 	}
 
-	public static String addServer(String contract) throws Exception {
+	public static String addServer(String contract) throws OTException {
 		attempt("Adding server");
 		// /how to check if server is already in the wallet??
 		List<String> before = getServerIds();
@@ -55,43 +56,43 @@ public class ServerModule extends ContactModule {
 		return serverId;
 	}
 
-	public static void renameServer(String serverId, String serverName) throws Exception {
+	public static void renameServer(String serverId, String serverName) throws OTException {
 		attempt("Renaming server");
 		serverId = parseServerId(serverId);
-		if (!OTAPI.setServerName(serverId, serverName))
+		if (!OTAPI.SetServer.name(serverId, serverName))
 			error("Failed to rename");
 		showServer(serverId);
 		success("Server is renamed");
 	}
 
-	public static String getServerContract(String serverId) throws Exception {
-		return OTAPI.getServerContract(serverId);
+	public static String getServerContract(String serverId) throws OTException {
+		return OTAPI.GetServer.contract(serverId);
 	}
 
-	public static String showServerContract(String serverId) throws Exception {
+	public static String showServerContract(String serverId) throws OTException {
 		serverId = parseServerId(serverId);
 		String contract = getServerContract(serverId);
 		publish(contract);
 		return contract;
 	}
 
-	public static void showServerAccounts(String serverId) throws Exception {
+	public static void showServerAccounts(String serverId) throws OTException {
 		serverId = parseServerId(serverId);
 		print(String.format("%12s:", "ACCOUNTS"));
 		int accountCount = OTAPI.getAccountCount();
 		for (int index = 0; index < accountCount; index++) {
-			String accountId = OTAPI.getAccountId(index);
+			String accountId = OTAPI.GetAccount.id(index);
 			if (getAccountServerId(accountId).equals(serverId))
 				showLedger(accountId);
 		}
 	}
 
-	public static void deleteServer(String serverId) throws Exception {
+	public static void deleteServer(String serverId) throws OTException {
 		attempt("Deleting server");
 		serverId = parseServerId(serverId);
-		if (!OTAPI.canDeleteServer(serverId))
+		if (!OTAPI.Wallet.canDeleteServer(serverId))
 			error("Server cannot be deleted");
-		if (!OTAPI.deleteServer(serverId))
+		if (!OTAPI.Wallet.deleteServer(serverId))
 			error("Failed to delete server");
 		success("Server is deleted");
 	}
